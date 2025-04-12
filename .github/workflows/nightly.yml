@@ -100,6 +100,9 @@ jobs:
           envkey_MOCK_USER_PASSWORD: ${{ secrets.MOCK_USER_PASSWORD }}
           envkey_LIVE_USER_EMAIL: ${{ secrets.LIVE_USER_EMAIL }}
           envkey_LIVE_USER_PASSWORD: ${{ secrets.LIVE_USER_PASSWORD }}
+          envkey_LIVE_TRUSTED_DEVICE_PASSWORD: ${{ secrets.LIVE_TRUSTED_DEVICE_PASSWORD }}
+          envkey_LIVE_TRUSTED_DEVICE_KEY: ${{ secrets.LIVE_TRUSTED_DEVICE_KEY }}
+          envkey_LIVE_TRUSTED_DEVICE_GROUP_KEY: ${{ secrets.LIVE_TRUSTED_DEVICE_GROUP_KEY }}
           directory: ./
           file_name: .env
           fail_on_empty: false
@@ -142,6 +145,9 @@ jobs:
           envkey_MOCK_USER_PASSWORD: ${{ secrets.MOCK_USER_PASSWORD }}
           envkey_LIVE_USER_EMAIL: ${{ secrets.LIVE_USER_EMAIL }}
           envkey_LIVE_USER_PASSWORD: ${{ secrets.LIVE_USER_PASSWORD }}
+          envkey_LIVE_TRUSTED_DEVICE_PASSWORD: ${{ secrets.LIVE_TRUSTED_DEVICE_PASSWORD }}
+          envkey_LIVE_TRUSTED_DEVICE_KEY: ${{ secrets.LIVE_TRUSTED_DEVICE_KEY }}
+          envkey_LIVE_TRUSTED_DEVICE_GROUP_KEY: ${{ secrets.LIVE_TRUSTED_DEVICE_GROUP_KEY }}
           directory: ./
           file_name: .env
           fail_on_empty: false
