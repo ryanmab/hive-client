@@ -1,0 +1,193 @@
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: '7 7 * * *'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+name: Nightly
+
+env:
+  region: eu-west-2
+
+jobs:
+  setup:
+    name: Setup Environment
+    runs-on: ubuntu-latest
+    outputs:
+      user_pool_id: ${{ steps.outputs.outputs.user_pool_id }}
+      test_user_pool_client_id: ${{ steps.outputs.outputs.user_pool_client_id }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.region }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Initialise Terraform
+        working-directory: ./infrastructure/tests
+        run: |
+          terraform init -input=false \
+            -backend-config="bucket=hive-client-tf-state" \
+            -backend-config="key=ci/${{ github.run_id }}/terraform.tfstate" \
+            -backend-config="region=${{ env.region }}" \
+            -backend-config="dynamodb_table=hive-client-tf-state"
+
+      - name: Run format
+        working-directory: ./infrastructure/tests
+        run: terraform fmt -check -no-color
+
+      - name: Run validate
+        working-directory: ./infrastructure/tests
+        run: terraform validate -no-color
+
+      - name: Run apply
+        working-directory: ./infrastructure/tests
+        run: |
+          terraform apply -input=false -auto-approve -no-color \
+            -var="integration_test_user_email=${{ secrets.MOCK_USER_EMAIL }}" \
+            -var="integration_test_user_password=${{ secrets.MOCK_USER_PASSWORD }}" \
+            -var="aws_region=${{ env.region }}"
+
+      - id: outputs
+        name: Set outputs
+        working-directory: ./infrastructure/tests
+        run: |
+          echo "user_pool_id=$(terraform output -raw test_user_pool_id)" >> $GITHUB_OUTPUT
+          echo "user_pool_client_id=$(terraform output -raw test_user_pool_client_id)" >> $GITHUB_OUTPUT
+
+  nightly:
+    runs-on: ubuntu-latest
+    name: Test (nightly)
+    needs: [ setup ]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.region }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Install nightly
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Mask outputs
+        run: |
+          # Mask all of the outputs in the workflow logs - its not _that_ sensitive as the user pool
+          # is temporary, but its still a good idea to mask it
+          echo "::add-mask::${{ needs.setup.outputs.test_user_pool_client_id }}"
+
+
+      - name: Setup environment variables
+        uses: SpicyPizza/create-envfile@v2.0
+        with:
+          envkey_POOL_ID: ${{ needs.setup.outputs.user_pool_id }}
+          envkey_REGION: ${{ env.region }}
+          envkey_CLIENT_ID: ${{ needs.setup.outputs.test_user_pool_client_id }}
+          envkey_MOCK_USER_EMAIL: ${{ secrets.MOCK_USER_EMAIL }}
+          envkey_MOCK_USER_PASSWORD: ${{ secrets.MOCK_USER_PASSWORD }}
+          envkey_LIVE_USER_EMAIL: ${{ secrets.LIVE_USER_EMAIL }}
+          envkey_LIVE_USER_PASSWORD: ${{ secrets.LIVE_USER_PASSWORD }}
+          directory: ./
+          file_name: .env
+          fail_on_empty: false
+
+      - name: cargo test --locked
+        run: cargo test --locked --all-features --all-targets
+
+      - name: cargo test --doc
+        run: cargo test --locked --all-features --doc
+
+  update:
+    runs-on: ubuntu-latest
+    name: Test (beta / updated)
+    needs: [ setup ]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.region }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Install nightly
+        uses: dtolnay/rust-toolchain@beta
+
+      - name: Mask outputs
+        run: |
+          # Mask all of the outputs in the workflow logs - its not _that_ sensitive as the user pool
+          # is temporary, but its still a good idea to mask it
+          echo "::add-mask::${{ needs.setup.outputs.test_user_pool_client_id }}"
+
+      - name: Setup environment variables
+        uses: SpicyPizza/create-envfile@v2.0
+        with:
+          envkey_POOL_ID: ${{ needs.setup.outputs.user_pool_id }}
+          envkey_REGION: ${{ env.region }}
+          envkey_CLIENT_ID: ${{ needs.setup.outputs.test_user_pool_client_id }}
+          envkey_MOCK_USER_EMAIL: ${{ secrets.MOCK_USER_EMAIL }}
+          envkey_MOCK_USER_PASSWORD: ${{ secrets.MOCK_USER_PASSWORD }}
+          envkey_LIVE_USER_EMAIL: ${{ secrets.LIVE_USER_EMAIL }}
+          envkey_LIVE_USER_PASSWORD: ${{ secrets.LIVE_USER_PASSWORD }}
+          directory: ./
+          file_name: .env
+          fail_on_empty: false
+
+      - name: cargo update
+        run: cargo update
+
+      - name: cargo test
+        run: cargo test --locked --all-features --all-targets
+        env:
+          RUSTFLAGS: -D deprecated
+
+      - name: cargo test --doc
+        run: cargo test --locked --all-features --doc
+        env:
+          RUSTFLAGS: -D deprecated
+
+  teardown:
+    name: Teardown Environment
+    runs-on: ubuntu-latest
+    needs: [ setup, nightly, update ]
+    if: always() && needs.setup.result != 'skipped'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.region }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Initialise Terraform
+        working-directory: ./infrastructure/tests
+        run: |
+          terraform init -input=false \
+            -backend-config="bucket=hive-client-tf-state" \
+            -backend-config="key=ci/${{ github.run_id }}/terraform.tfstate" \
+            -backend-config="region=${{ env.region }}" \
+            -backend-config="dynamodb_table=hive-client-tf-state"
+
+      - name: Run destroy
+        working-directory: ./infrastructure/tests
+        run: |
+          terraform destroy -input=false -auto-approve -no-color \
+            -var="integration_test_user_email=${{ secrets.MOCK_USER_EMAIL }}" \
+            -var="integration_test_user_password=${{ secrets.MOCK_USER_PASSWORD }}" \
+            -var="aws_region=${{ env.region }}"
