@@ -7,17 +7,17 @@
 
 <!-- cargo-rdme start -->
 
-# Hive
+# Hive Client
 
-The Hive crate provides a client for interfacing [Hive](https://www.hivehome.com/) smart home systems.
+The Hive Client crate provides a client for interfacing [Hive](https://www.hivehome.com/) smart home systems.
 
-# Usage
+## Usage
 ```toml
 [dependencies]
 hive-client = "0.0.1"
 ```
 
-# Capabilities
+## Capabilities
 
 1. Authenticate with Hive.
 2. Setup trusted devices in a Hive account.
@@ -29,11 +29,11 @@ hive-client = "0.0.1"
 8. Change state of Products in a Hive account (Boost heating/hot water, change target
    temperature, etc).
 
-# Examples
+## Examples
 
 More in-depth examples can be found in documentation comments on the Client methods.
 
-## Trigger a Quick Action
+### Trigger a Quick Action
 
 ```rust
 use hive_client::authentication::{TrustedDevice, User};
@@ -63,7 +63,7 @@ if let Ok(_) = attempt {
 }
 ```
 
-## Set Target Temperature of Heating
+### Set Target Temperature of Heating
 
 ```rust
 use hive_client::authentication::{TrustedDevice, User};
@@ -94,7 +94,7 @@ if let Ok(_) = attempt {
 }
 ```
 
-## Retrieve Current Weather
+### Retrieve Current Weather
 
 ```rust
 use hive_client::authentication::{TrustedDevice, User};
@@ -124,15 +124,56 @@ if let Ok(_) = attempt {
 }
 ```
 
-# Contributing
+## Contributing
 
-There are _tons_ of features which could be added to the Hive crate. If you'd like to contribute, please
+There are _tons_ of features which could be added to the crate. If you'd like to contribute, please
 feel free to open an issue or a pull request.
 
 Examples of features which could be added:
-1. Better parity between the Hive API and the Hive crate structs.
+1. Better parity between the Hive API and the structs.
 2. Support for controlling Holiday Mode.
 3. Support for modifying the schedule of a Hive Device.
 4. Support for other Hive products (e.g. Hive Lights, Smart Plugs, Motion Sensors, etc).
+
+### Testing
+Many of the tests require that an AWS Cognito User Pool, configured with SRP authentication and device
+tracking, be available to act as a mock server.
+
+The setup of a suitable User Pool is fully automated with Terraform (see the [`infrastructure`](infrastructure/) folder).
+
+#### Set up
+
+In order to setup the test environment, Terraform needs to be installed and AWS credentials need to be
+configured locally.
+
+Once this is done, running `apply` should setup the Terraform backend, and the user pool and app client in the correct state:
+```sh
+# Setup state backend
+cd infrastructure/state && terraform init && terraform apply
+
+# Setup user pool
+cd infrastructure/tests && terraform init --backend-config="./local.config" && terraform apply
+```
+
+After the user pool is set up, multiple environment variables need to be set in a `.env` file.
+
+The `.env` file can be created by using `.env.example` as a template:
+```sh
+cp .env.example .env
+```
+
+#### Running tests
+
+The tests can be run with:
+```sh
+cargo test
+```
+
+#### Tear down
+
+The test environment can be torn down at any point with:
+```sh
+cd infrastructure/tests && terraform destroy
+```
 
 <!-- cargo-rdme end -->
