@@ -5,7 +5,7 @@ use hive_client::Client;
 
 #[tokio::test]
 pub async fn test_user_sign_in_works() {
-    let client = Client::new("Home Automation").await;
+    let mut client = Client::new("Home Automation").await;
 
     let user = User::new(
         dotenv!("LIVE_USER_EMAIL"),
@@ -21,11 +21,13 @@ pub async fn test_user_sign_in_works() {
         .login(user)
         .await
         .expect("Logging in with Hive should succeed");
+
+    client.logout().await;
 }
 
 #[tokio::test]
 pub async fn test_listing_quick_actions() {
-    let client = Client::new("Home Automation").await;
+    let mut client = Client::new("Home Automation").await;
 
     let user = User::new(
         dotenv!("LIVE_USER_EMAIL"),
@@ -51,11 +53,13 @@ pub async fn test_listing_quick_actions() {
         !quick_actions.is_empty(),
         "Quick actions should not be empty"
     );
+
+    client.logout().await;
 }
 
 #[tokio::test]
 pub async fn test_listing_devices() {
-    let client = Client::new("Home Automation").await;
+    let mut client = Client::new("Home Automation").await;
 
     let user = User::new(
         dotenv!("LIVE_USER_EMAIL"),
@@ -78,11 +82,13 @@ pub async fn test_listing_devices() {
         .expect("Listing devices should succeed");
 
     assert!(!devices.is_empty(), "Devices should not be empty");
+
+    client.logout().await;
 }
 
 #[tokio::test]
 pub async fn test_listing_products() {
-    let client = Client::new("Home Automation").await;
+    let mut client = Client::new("Home Automation").await;
 
     let user = User::new(
         dotenv!("LIVE_USER_EMAIL"),
@@ -121,4 +127,6 @@ pub async fn test_listing_products() {
         )),
         "Products should contain a hot water product"
     );
+
+    client.logout().await;
 }

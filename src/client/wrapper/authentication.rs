@@ -191,6 +191,8 @@ impl Client {
 
     /// Logout from Hive.
     ///
+    /// Note: This only clears the client, it does not perform any operations on the Hive Account.
+    ///
     /// # Examples
     ///
     /// ```no_run
@@ -210,31 +212,25 @@ impl Client {
     /// // Login shouldn't require any additional challenges, as a remembered device was provided.
     /// assert!(attempt.is_ok());
     ///
-    /// client.logout()
-    ///     .await
-    ///     .expect("Logout should succeed");
+    /// client.logout().await;
     /// # })
     /// ```
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the logout process fails.
-    pub async fn logout(&mut self) -> Result<(), AuthenticationError> {
-        if self.tokens.lock().await.as_ref().is_none() {
-            return Ok(());
-        }
+    pub async fn logout(&mut self) {
+        // Note that we're not calling any operations in Cognito here. Instead,
+        // we're just dropping the tokens and user from the Client.
+        //
+        // There are a number of options for invalidating refresh tokens tokens,
+        // however the one we want is the Revoke Operation API call, which is not
+        // enabled in Hive's user pool.
+        //
+        // It's possible to use the Global Sign out endpoint, but this would sign out
+        // everyone using the same user account, which is not ideal.
+        //
+        // https://docs.aws.amazon.com/cognito/latest/developerguide/token-revocation.html
+        drop(self.user.lock().await.take());
+        drop(self.tokens.lock().await.take());
 
-        self.user.lock().await.take();
-
-        let tokens = self.tokens.lock().await.take();
-
-        if let Some(tokens) = tokens {
-            self.auth.logout(&tokens).await?;
-        }
-
-        log::info!("Taken API client and user details now that logout is complete.");
-
-        Ok(())
+        log::info!("Logout is complete, tokens have been dropped.");
     }
 
     /// Refresh the currently stored [`Tokens`], if they have expired.
@@ -266,7 +262,7 @@ impl Client {
                                 Arc::clone(current_tokens),
                             )
                             .await
-                            .map_err(|_| ApiError::AuthenticationRefreshFailed)?,
+                            .map_err(ApiError::AuthenticationRefreshFailed)?,
                     )
                 };
 
@@ -282,7 +278,9 @@ impl Client {
                 Ok(Arc::clone(&replacement_tokens))
             }
             Some(current_tokens) => Ok(Arc::clone(current_tokens)),
-            None => Err(ApiError::AuthenticationRefreshFailed),
+            None => Err(ApiError::AuthenticationRefreshFailed(
+                AuthenticationError::NotLoggedIn,
+            )),
         }
     }
 }

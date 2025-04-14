@@ -9,7 +9,6 @@ mod challenge;
 mod confirm_device;
 mod error;
 mod login;
-mod logout;
 mod refresh;
 mod user;
 

@@ -30,13 +30,6 @@ pub enum AuthenticationError {
         SdkError<aws_sdk_cognitoidentityprovider::operation::respond_to_auth_challenge::RespondToAuthChallengeError>,
     ),
 
-    #[error(transparent)]
-    /// The request to logout the user failed.
-    LogoutFailed(
-        #[from]
-        SdkError<aws_sdk_cognitoidentityprovider::operation::global_sign_out::GlobalSignOutError>,
-    ),
-
     #[error("The challenge was not handled correctly")]
     /// A parameter which was expected to be present in the challenge was not found.
     MissingChallengeParameter(String),
@@ -65,7 +58,7 @@ pub enum AuthenticationError {
     AuthenticationRefreshFailed,
 
     #[error("There is currently no valid authentication in progress")]
-    /// The authentication flow is not currently in progress, and the user is not logged in.
+    /// The authentication flow is not currently in progress, and the user is not `log`ged in.
     NoAuthenticationInProgress,
 
     #[error("Unable to continue with the authentication flow as the user is not logged in")]

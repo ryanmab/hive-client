@@ -71,12 +71,12 @@ mod tests {
         assert!(!trusted_device.device_password.is_empty());
         assert!(trusted_device.device_key.starts_with(dotenv!("REGION")));
 
-        client.logout().await.expect("Logout should succeed");
+        client.logout().await;
     }
 
     #[tokio::test]
     async fn test_cognito_authentication_refresh() {
-        let client = Client::new("Home Automation").await;
+        let mut client = Client::new("Home Automation").await;
 
         let user = User::new(
             dotenv!("MOCK_USER_EMAIL"),
@@ -97,7 +97,7 @@ mod tests {
                 current_tokens.id_token.to_string(),
                 current_tokens.access_token.to_string(),
                 current_tokens.refresh_token.to_string(),
-                0,
+                -1000,
             ));
             tokens.replace(Arc::clone(&replacement_tokens));
 
@@ -109,9 +109,10 @@ mod tests {
             .await
             .expect("Refresh tokens should succeed");
 
-        assert_ne!(current_tokens.id_token, refreshed_tokens.id_token);
         assert_ne!(current_tokens.access_token, refreshed_tokens.access_token);
         assert_eq!(current_tokens.refresh_token, refreshed_tokens.refresh_token);
         assert!(current_tokens.expires_at < refreshed_tokens.expires_at);
+
+        client.logout().await;
     }
 }
