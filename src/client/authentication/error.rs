@@ -48,13 +48,6 @@ pub enum AuthenticationError {
         SrpError,
     ),
 
-    // #[error("An error occurred while trying to communicate with the Hive API")]
-    //
-    // ApiError(
-    //     #[from]
-    //     reqwest::Error
-    // ),
-
     #[error("A challenge was requested")]
     /// A challenge was requested by the Hive authentication servers which requires manual intervention.
     ///

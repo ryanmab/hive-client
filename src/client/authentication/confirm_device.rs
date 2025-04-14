@@ -1,4 +1,4 @@
-use crate::authentication::user::{AccountDevice, UntrustedDevice};
+use crate::authentication::user::{AuthDevice, UntrustedDevice};
 use crate::client::authentication::TrustedDevice;
 use crate::client::authentication::{DeviceClient, HiveAuth, Tokens};
 use crate::AuthenticationError;
@@ -19,7 +19,7 @@ impl HiveAuth {
         let device_group_key = untrusted_device.device_group_key.clone();
 
         let lock = self
-            .get_device_srp_client(username, &AccountDevice::Untrusted(untrusted_device))
+            .get_device_srp_client(username, &AuthDevice::Untrusted(untrusted_device))
             .await;
 
         let srp_client = &mut *lock.write().await;

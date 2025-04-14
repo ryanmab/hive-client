@@ -5,7 +5,7 @@ use hive_client::Client;
 
 #[tokio::test]
 pub async fn test_user_sign_in_works() {
-    let client = Client::new().await;
+    let client = Client::new("Home Automation").await;
 
     let user = User::new(
         dotenv!("LIVE_USER_EMAIL"),
@@ -25,7 +25,7 @@ pub async fn test_user_sign_in_works() {
 
 #[tokio::test]
 pub async fn test_listing_quick_actions() {
-    let client = Client::new().await;
+    let client = Client::new("Home Automation").await;
 
     let user = User::new(
         dotenv!("LIVE_USER_EMAIL"),
@@ -55,7 +55,7 @@ pub async fn test_listing_quick_actions() {
 
 #[tokio::test]
 pub async fn test_listing_devices() {
-    let client = Client::new().await;
+    let client = Client::new("Home Automation").await;
 
     let user = User::new(
         dotenv!("LIVE_USER_EMAIL"),
@@ -82,7 +82,7 @@ pub async fn test_listing_devices() {
 
 #[tokio::test]
 pub async fn test_listing_products() {
-    let client = Client::new().await;
+    let client = Client::new("Home Automation").await;
 
     let user = User::new(
         dotenv!("LIVE_USER_EMAIL"),

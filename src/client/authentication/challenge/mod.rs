@@ -1,4 +1,4 @@
-use crate::authentication::user::{AccountDevice, UntrustedDevice};
+use crate::authentication::user::{AuthDevice, UntrustedDevice};
 use crate::client::authentication::DeviceClient;
 use crate::client::authentication::HiveAuth;
 use crate::client::authentication::Tokens;
@@ -10,6 +10,7 @@ use aws_sdk_cognitoidentityprovider::types::{
 };
 use std::collections::HashMap;
 use std::fmt::Debug;
+use std::sync::Arc;
 
 mod device_password_verifier;
 mod device_srp_auth;
@@ -92,9 +93,9 @@ impl HiveAuth {
                     let client = self
                         .get_device_srp_client(
                             &session.0,
-                            user.account_device.as_ref().expect(
+                            &AuthDevice::Trusted(Arc::clone(user.device.as_ref().expect(
                                 "Device details should be set to use device SRP authentication",
-                            ),
+                            ))),
                         )
                         .await;
 
@@ -110,9 +111,9 @@ impl HiveAuth {
                     let client = self
                         .get_device_srp_client(
                             &session.0,
-                            user.account_device.as_ref().expect(
-                                "Device details must be set to use device SRP authentication",
-                            ),
+                            &AuthDevice::Trusted(Arc::clone(user.device.as_ref().expect(
+                                "Device details should be set to use device SRP authentication",
+                            ))),
                         )
                         .await;
 
@@ -162,36 +163,20 @@ impl HiveAuth {
                     ..
                 }) = response.authentication_result
                 {
+                    let mut untrusted_device: Option<UntrustedDevice> = None;
                     if let Some(NewDeviceMetadataType {
                         device_key: Some(device_key),
                         device_group_key: Some(device_group_key),
                         ..
                     }) = new_device_metadata
                     {
-                        return Ok((
-                            Tokens::new(
-                                id_token,
-                                access_token,
-                                refresh_token,
-                                Some((&device_key).into()),
-                                expires_in,
-                            ),
-                            Some(UntrustedDevice::new(&device_group_key, &device_key)),
-                        ));
+                        untrusted_device =
+                            Some(UntrustedDevice::new(&device_group_key, &device_key));
                     }
 
                     Ok((
-                        Tokens::new(
-                            id_token,
-                            access_token,
-                            refresh_token,
-                            user.account_device.as_ref().map(|device| match &device {
-                                AccountDevice::Trusted(device) => device.device_key.to_string(),
-                                AccountDevice::Untrusted(device) => device.device_key.to_string(),
-                            }),
-                            expires_in,
-                        ),
-                        None,
+                        Tokens::new(id_token, access_token, refresh_token, expires_in),
+                        untrusted_device,
                     ))
                 } else {
                     Err(AuthenticationError::AccessTokenNotValid)

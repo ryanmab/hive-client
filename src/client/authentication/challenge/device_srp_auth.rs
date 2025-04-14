@@ -1,4 +1,3 @@
-use crate::authentication::user::AccountDevice;
 use crate::authentication::{LoginSession, User};
 use crate::constants::CLIENT_ID;
 use crate::AuthenticationError;
@@ -22,7 +21,7 @@ pub async fn handle_challenge(
         .client_id(CLIENT_ID)
         .challenge_name(ChallengeNameType::DeviceSrpAuth);
 
-    if let Some(AccountDevice::Trusted(trusted_device)) = &user.account_device {
+    if let Some(trusted_device) = &user.device {
         builder = builder.challenge_responses("DEVICE_KEY", &trusted_device.device_key);
     }
 

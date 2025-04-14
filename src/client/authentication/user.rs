@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
 use std::fmt::Debug;
 use std::ops::Add;
+use std::sync::Arc;
 
 #[derive(Debug)]
 /// A user registed with a Hive account.
@@ -9,7 +10,7 @@ pub struct User {
     /// to register the account.
     pub(crate) username: String,
     pub(crate) password: String,
-    pub(crate) account_device: Option<AccountDevice>,
+    pub(crate) device: Option<Arc<TrustedDevice>>,
 }
 
 impl User {
@@ -26,24 +27,24 @@ impl User {
         Self {
             username: username.into(),
             password: password.into(),
-            account_device: trusted_device.map(AccountDevice::Trusted),
+            device: trusted_device.map(Arc::new),
         }
     }
 }
 
 #[derive(Debug)]
-pub enum AccountDevice {
-    Trusted(TrustedDevice),
+pub enum AuthDevice {
+    Trusted(Arc<TrustedDevice>),
     Untrusted(UntrustedDevice),
 }
 
-#[derive(Debug)]
-/// A trusted device is a device that has been confirmed by the user (see [`crate::Client::confirm_device`]).
+/// A trusted device is a device that has been confirmed.
 ///
 /// Hive uses AWS Cognito for authentication, and a trusted device in a Hive account is actually a tracked
 /// device in AWS Cognito.
 ///
 /// See the [AWS Cognito documentation](https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-device-tracking.html#user-pools-remembered-devices-getting-a-device-key) for more information.
+#[derive(Debug, Clone)]
 pub struct TrustedDevice {
     #[allow(missing_docs)]
     pub device_group_key: String,
@@ -110,7 +111,6 @@ pub struct Tokens {
     pub(crate) id_token: String,
     pub(crate) access_token: String,
     pub(crate) refresh_token: String,
-    pub(crate) device_key: Option<String>,
     pub(crate) expires_at: DateTime<Utc>,
 }
 
@@ -120,14 +120,12 @@ impl Tokens {
         id_token: String,
         access_token: String,
         refresh_token: String,
-        device_key: Option<String>,
         expires_in: i32,
     ) -> Self {
         Self {
             id_token,
             access_token,
             refresh_token,
-            device_key,
             expires_at: Utc::now().add(chrono::Duration::seconds(i64::from(expires_in))),
         }
     }

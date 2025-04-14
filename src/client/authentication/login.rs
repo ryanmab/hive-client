@@ -1,4 +1,4 @@
-use crate::authentication::user::{AccountDevice, UntrustedDevice};
+use crate::authentication::user::UntrustedDevice;
 use crate::client::authentication::User;
 use crate::client::authentication::{ChallengeResponse, HiveAuth, Tokens};
 use crate::{constants, AuthenticationError};
@@ -63,36 +63,21 @@ impl HiveAuth {
                     ..
                 }) = response.authentication_result
                 {
+                    let mut untrusted_device: Option<UntrustedDevice> = None;
+
                     if let Some(NewDeviceMetadataType {
                         device_key: Some(device_key),
                         device_group_key: Some(device_group_key),
                         ..
                     }) = new_device_metadata
                     {
-                        return Ok((
-                            Tokens::new(
-                                id_token,
-                                access_token,
-                                refresh_token,
-                                Some((&device_key).into()),
-                                expires_in,
-                            ),
-                            Some(UntrustedDevice::new(&device_group_key, &device_key)),
-                        ));
+                        untrusted_device =
+                            Some(UntrustedDevice::new(&device_group_key, &device_key));
                     }
 
                     Ok((
-                        Tokens::new(
-                            id_token,
-                            access_token,
-                            refresh_token,
-                            user.account_device.as_ref().map(|details| match &details {
-                                AccountDevice::Trusted(device) => device.device_key.to_string(),
-                                AccountDevice::Untrusted(device) => device.device_key.to_string(),
-                            }),
-                            expires_in,
-                        ),
-                        None,
+                        Tokens::new(id_token, access_token, refresh_token, expires_in),
+                        untrusted_device,
                     ))
                 } else {
                     Err(AuthenticationError::AccessTokenNotValid)
