@@ -58,7 +58,7 @@ pub enum AuthenticationError {
     AuthenticationRefreshFailed,
 
     #[error("There is currently no valid authentication in progress")]
-    /// The authentication flow is not currently in progress, and the user is not `log`ged in.
+    /// There is no authentication flow currently in progress, and the user is not logged in.
     NoAuthenticationInProgress,
 
     #[error("Unable to continue with the authentication flow as the user is not logged in")]
