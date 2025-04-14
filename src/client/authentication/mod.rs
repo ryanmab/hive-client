@@ -9,7 +9,6 @@ mod challenge;
 mod confirm_device;
 mod error;
 mod login;
-mod logout;
 mod refresh;
 mod user;
 
@@ -18,7 +17,7 @@ pub use error::{AuthenticationError, DeviceConfirmationError};
 pub use user::{TrustedDevice, User};
 
 pub(crate) use login::LoginSession;
-pub(crate) use user::AccountDevice;
+pub(crate) use user::AuthDevice;
 pub(crate) use user::Tokens;
 
 #[derive(Debug)]
@@ -80,7 +79,7 @@ impl HiveAuth {
     async fn get_device_srp_client(
         &self,
         username: &str,
-        account_device: &AccountDevice,
+        account_device: &AuthDevice,
     ) -> Arc<RwLock<Option<DeviceClient>>> {
         let client = Arc::clone(&self.srp.device);
 
@@ -88,7 +87,7 @@ impl HiveAuth {
             let mut client = client.write().await;
 
             match &account_device {
-                AccountDevice::Untrusted(untrusted_device) => {
+                AuthDevice::Untrusted(untrusted_device) => {
                     let credentials = UntrackedDevice::new(
                         constants::POOL_ID,
                         &untrusted_device.device_group_key,
@@ -108,7 +107,7 @@ impl HiveAuth {
                         }
                     }
                 }
-                AccountDevice::Trusted(trusted_device) => {
+                AuthDevice::Trusted(trusted_device) => {
                     let credentials = TrackedDevice::new(
                         constants::POOL_ID,
                         username,

@@ -37,5 +37,8 @@ resource "aws_cognito_user_pool_client" "test_client" {
   name         = "integration-test-client"
 
   explicit_auth_flows = ["ALLOW_USER_SRP_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"]
-  generate_secret = false
+
+  # To match Hive's configuration
+  enable_token_revocation = false
+  generate_secret         = false
 }

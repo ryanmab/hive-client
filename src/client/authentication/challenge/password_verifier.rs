@@ -1,4 +1,3 @@
-use crate::authentication::user::AccountDevice;
 use crate::authentication::{LoginSession, User};
 use crate::constants::CLIENT_ID;
 use crate::AuthenticationError;
@@ -52,7 +51,7 @@ pub async fn respond_to_challenge(
         )
         .challenge_responses("TIMESTAMP", &parameters.timestamp);
 
-    if let Some(AccountDevice::Trusted(trusted_device)) = &user.account_device {
+    if let Some(trusted_device) = &user.device {
         builder = builder.challenge_responses("DEVICE_KEY", &trusted_device.device_key);
     }
 

@@ -5,7 +5,11 @@ use aws_sdk_cognitoidentityprovider::types::{AuthFlowType, AuthenticationResultT
 use std::sync::Arc;
 
 impl HiveAuth {
-    pub async fn refresh_tokens(&self, tokens: Arc<Tokens>) -> Result<Tokens, AuthenticationError> {
+    pub async fn refresh_tokens(
+        &self,
+        device_key: Option<&str>,
+        tokens: Arc<Tokens>,
+    ) -> Result<Tokens, AuthenticationError> {
         let mut builder = self
             .cognito
             .initiate_auth()
@@ -13,7 +17,7 @@ impl HiveAuth {
             .auth_flow(AuthFlowType::RefreshTokenAuth)
             .auth_parameters("REFRESH_TOKEN", tokens.refresh_token.clone());
 
-        if let Some(device_key) = &tokens.device_key {
+        if let Some(device_key) = device_key {
             builder = builder.auth_parameters("DEVICE_KEY", device_key);
         }
 
@@ -36,7 +40,6 @@ impl HiveAuth {
                 id_token,
                 access_token,
                 tokens.refresh_token.clone(),
-                tokens.device_key.clone(),
                 expires_in,
             ))
         } else {

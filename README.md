@@ -38,7 +38,7 @@ More in-depth examples can be found in documentation comments on the Client meth
 ```rust
 use hive_client::authentication::{TrustedDevice, User};
 
-let client = hive_client::Client::new().await;
+let client = hive_client::Client::new("Home Automation").await;
 
 let trusted_device = Some(TrustedDevice::new(
     "device_password",
@@ -69,7 +69,7 @@ if let Ok(_) = attempt {
 use hive_client::authentication::{TrustedDevice, User};
 use hive_client::products::{Product, ProductData, State, States};
 
-let client = hive_client::Client::new().await;
+let client = hive_client::Client::new("Home Automation").await;
 
 let trusted_device = Some(TrustedDevice::new(
     "device_password",
@@ -100,7 +100,7 @@ if let Ok(_) = attempt {
 use hive_client::authentication::{TrustedDevice, User};
 use hive_client::products::{Product, ProductData, State, States};
 
-let client = hive_client::Client::new().await;
+let client = hive_client::Client::new("Home Automation").await;
 
 let trusted_device = Some(TrustedDevice::new(
     "device_password",

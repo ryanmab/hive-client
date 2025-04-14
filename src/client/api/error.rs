@@ -1,3 +1,4 @@
+use crate::AuthenticationError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -14,7 +15,6 @@ pub enum ApiError {
     InvalidResponse(#[from] serde_json::Error),
 
     #[error("An error occurred while trying to refresh the authentication tokens")]
-    /// When refreshing the authentication tokens in order to make a request to the Hive API,
-    /// an error occurred.
-    AuthenticationRefreshFailed,
+    /// When refreshing the authentication tokens an error occurred.
+    AuthenticationRefreshFailed(AuthenticationError),
 }

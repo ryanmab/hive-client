@@ -30,13 +30,6 @@ pub enum AuthenticationError {
         SdkError<aws_sdk_cognitoidentityprovider::operation::respond_to_auth_challenge::RespondToAuthChallengeError>,
     ),
 
-    #[error(transparent)]
-    /// The request to logout the user failed.
-    LogoutFailed(
-        #[from]
-        SdkError<aws_sdk_cognitoidentityprovider::operation::global_sign_out::GlobalSignOutError>,
-    ),
-
     #[error("The challenge was not handled correctly")]
     /// A parameter which was expected to be present in the challenge was not found.
     MissingChallengeParameter(String),
@@ -47,13 +40,6 @@ pub enum AuthenticationError {
         #[from]
         SrpError,
     ),
-
-    // #[error("An error occurred while trying to communicate with the Hive API")]
-    //
-    // ApiError(
-    //     #[from]
-    //     reqwest::Error
-    // ),
 
     #[error("A challenge was requested")]
     /// A challenge was requested by the Hive authentication servers which requires manual intervention.
@@ -72,7 +58,7 @@ pub enum AuthenticationError {
     AuthenticationRefreshFailed,
 
     #[error("There is currently no valid authentication in progress")]
-    /// The authentication flow is not currently in progress, and the user is not logged in.
+    /// There is no authentication flow currently in progress, and the user is not logged in.
     NoAuthenticationInProgress,
 
     #[error("Unable to continue with the authentication flow as the user is not logged in")]

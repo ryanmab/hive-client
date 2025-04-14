@@ -13,7 +13,7 @@ impl Client {
     /// use hive_client::products::{Product, ProductData, State, States};
     ///
     /// # tokio_test::block_on(async {
-    /// let client = hive_client::Client::new().await;
+    /// let client = hive_client::Client::new("Home Automation").await;
     ///
     /// let trusted_device = Some(TrustedDevice::new(
     ///     "device_password",
