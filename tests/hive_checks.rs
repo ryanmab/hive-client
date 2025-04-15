@@ -4,29 +4,7 @@ use hive_client::products::Product;
 use hive_client::Client;
 
 #[tokio::test]
-pub async fn test_user_sign_in_works() {
-    let mut client = Client::new("Home Automation").await;
-
-    let user = User::new(
-        dotenv!("LIVE_USER_EMAIL"),
-        dotenv!("LIVE_USER_PASSWORD"),
-        Some(TrustedDevice::new(
-            dotenv!("LIVE_TRUSTED_DEVICE_PASSWORD"),
-            dotenv!("LIVE_TRUSTED_DEVICE_GROUP_KEY"),
-            dotenv!("LIVE_TRUSTED_DEVICE_KEY"),
-        )),
-    );
-
-    client
-        .login(user)
-        .await
-        .expect("Logging in with Hive should succeed");
-
-    client.logout().await;
-}
-
-#[tokio::test]
-pub async fn test_listing_quick_actions() {
+pub async fn test_listing_operations() {
     let mut client = Client::new("Home Automation").await;
 
     let user = User::new(
@@ -48,70 +26,26 @@ pub async fn test_listing_quick_actions() {
         .get_actions()
         .await
         .expect("Listing quick actions should succeed");
-
-    assert!(
-        !quick_actions.is_empty(),
-        "Quick actions should not be empty"
-    );
-
-    client.logout().await;
-}
-
-#[tokio::test]
-pub async fn test_listing_devices() {
-    let mut client = Client::new("Home Automation").await;
-
-    let user = User::new(
-        dotenv!("LIVE_USER_EMAIL"),
-        dotenv!("LIVE_USER_PASSWORD"),
-        Some(TrustedDevice::new(
-            dotenv!("LIVE_TRUSTED_DEVICE_PASSWORD"),
-            dotenv!("LIVE_TRUSTED_DEVICE_GROUP_KEY"),
-            dotenv!("LIVE_TRUSTED_DEVICE_KEY"),
-        )),
-    );
-
-    client
-        .login(user)
-        .await
-        .expect("Logging in with Hive should succeed");
-
     let devices = client
         .get_devices()
         .await
         .expect("Listing devices should succeed");
-
-    assert!(!devices.is_empty(), "Devices should not be empty");
-
-    client.logout().await;
-}
-
-#[tokio::test]
-pub async fn test_listing_products() {
-    let mut client = Client::new("Home Automation").await;
-
-    let user = User::new(
-        dotenv!("LIVE_USER_EMAIL"),
-        dotenv!("LIVE_USER_PASSWORD"),
-        Some(TrustedDevice::new(
-            dotenv!("LIVE_TRUSTED_DEVICE_PASSWORD"),
-            dotenv!("LIVE_TRUSTED_DEVICE_GROUP_KEY"),
-            dotenv!("LIVE_TRUSTED_DEVICE_KEY"),
-        )),
-    );
-
-    client
-        .login(user)
-        .await
-        .expect("Logging in with Hive should succeed");
-
     let products = client
         .get_products()
         .await
         .expect("Listing products should succeed");
 
-    assert!(products.len() >= 2, "Products should not be empty");
+    let _ = client
+        .get_weather("SW1A 1AA")
+        .await
+        .expect("Getting weather should succeed");
 
+    assert!(
+        !quick_actions.is_empty(),
+        "Quick actions should not be empty"
+    );
+    assert!(!devices.is_empty(), "Devices should not be empty");
+    assert!(products.len() >= 2, "Products should not be empty");
     assert!(
         products.iter().any(|Product { data, .. }| matches!(
             data,
@@ -119,7 +53,6 @@ pub async fn test_listing_products() {
         )),
         "Products should contain a heating product"
     );
-
     assert!(
         products.iter().any(|Product { data, .. }| matches!(
             data,
