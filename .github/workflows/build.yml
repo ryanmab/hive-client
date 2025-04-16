@@ -89,7 +89,7 @@ jobs:
         uses: dtolnay/rust-toolchain@nightly
 
       - name: Install Cargo Docs-rs
-        uses: dtolnay/install@cargo-docs-rs
+        run: cargo install cargo-docs-rs
 
       - name: Install Cargo Rdme
         run: cargo install cargo-rdme
