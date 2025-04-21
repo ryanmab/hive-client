@@ -3,7 +3,7 @@ use crate::client::api::HiveApi;
 use crate::client::authentication::Tokens;
 use crate::helper::url::{get_base_url, Url};
 use crate::Client;
-use chrono::{serde::ts_milliseconds, DateTime, Utc};
+use chrono::{serde::ts_milliseconds, serde::ts_milliseconds_option, DateTime, Utc};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -48,9 +48,9 @@ pub enum ProductData {
         /// The unique ID of the Hive Heating product.
         id: String,
 
-        #[serde(with = "ts_milliseconds")]
+        #[serde(default, with = "ts_milliseconds_option")]
         /// The date and time when the Hive Heating product last communicated with the Hive servers.
-        last_seen: DateTime<Utc>,
+        last_seen: Option<DateTime<Utc>>,
 
         #[serde(with = "ts_milliseconds")]
         #[serde(rename = "created")]
@@ -74,9 +74,9 @@ pub enum ProductData {
         /// The unique ID of the Hive Hot Water product.
         id: String,
 
-        #[serde(with = "ts_milliseconds")]
+        #[serde(default, with = "ts_milliseconds_option")]
         /// The date and time when the Hive Hot Water product last communicated with the Hive servers.
-        last_seen: DateTime<Utc>,
+        last_seen: Option<DateTime<Utc>>,
 
         #[serde(with = "ts_milliseconds")]
         #[serde(rename = "created")]
