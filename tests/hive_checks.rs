@@ -49,14 +49,14 @@ pub async fn test_listing_operations() {
     assert!(
         products.iter().any(|Product { data, .. }| matches!(
             data,
-            hive_client::products::ProductData::Heating(_)
+            hive_client::products::ProductData::Heating { .. }
         )),
         "Products should contain a heating product"
     );
     assert!(
         products.iter().any(|Product { data, .. }| matches!(
             data,
-            hive_client::products::ProductData::HotWater(_)
+            hive_client::products::ProductData::HotWater { .. }
         )),
         "Products should contain a hot water product"
     );

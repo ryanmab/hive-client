@@ -86,7 +86,7 @@ if let Ok(_) = attempt {
         .await
         .expect("Products should be retrieved");
 
-    if let Some(mut heating) = products.into_iter().find(|Product { data, .. }| matches!(data, ProductData::Heating(_))) {
+    if let Some(mut heating) = products.into_iter().find(|Product { data, .. }| matches!(data, ProductData::Heating { .. })) {
         let was_set = heating.set_state(States(vec!(State::TargetTemperature(18.0))))
             .await
             .expect("Product state should be set");
