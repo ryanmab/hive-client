@@ -38,75 +38,62 @@ pub struct Properties {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-#[non_exhaustive]
-#[serde_as]
-#[allow(missing_docs)]
-pub struct Heating {
-    /// The unique ID of the Hive Heating product.
-    pub id: String,
-
-    #[serde(with = "ts_milliseconds")]
-    /// The date and time when the Hive Heating product last communicated with the Hive servers.
-    pub last_seen: DateTime<Utc>,
-
-    #[serde(with = "ts_milliseconds")]
-    #[serde(rename = "created")]
-    /// The date and time when the Hive Heating product was first created.
-    pub created_at: DateTime<Utc>,
-
-    #[serde(rename = "props")]
-    /// The properties of the Hive Heating product.
-    pub properties: Properties,
-
-    /// The current state of the Hive Heating product.
-    pub state: States,
-
-    #[serde(flatten)]
-    #[allow(missing_docs)]
-    pub extra: HashMap<String, Value>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-#[non_exhaustive]
-#[allow(missing_docs)]
-pub struct HotWater {
-    /// The unique ID of the Hive Hot Water product.
-    pub id: String,
-
-    #[serde(with = "ts_milliseconds")]
-    /// The date and time when the Hive Hot Water product last communicated with the Hive servers.
-    pub last_seen: DateTime<Utc>,
-
-    #[serde(with = "ts_milliseconds")]
-    #[serde(rename = "created")]
-    /// The date and time when the Hive Hot Water product was first created.
-    pub created_at: DateTime<Utc>,
-
-    #[serde(rename = "props")]
-    /// The properties of the Hive Hot Water product.
-    pub properties: Properties,
-
-    /// The current state of the Hive Hot Water product.
-    pub state: States,
-
-    #[serde(flatten)]
-    #[allow(missing_docs)]
-    pub extra: HashMap<String, Value>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "lowercase")]
 #[serde(tag = "type")]
 #[non_exhaustive]
 /// Data about a Hive product.
 pub enum ProductData {
     /// A Hive Heating product.
-    Heating(Heating),
+    Heating {
+        /// The unique ID of the Hive Heating product.
+        id: String,
+
+        #[serde(with = "ts_milliseconds")]
+        /// The date and time when the Hive Heating product last communicated with the Hive servers.
+        last_seen: DateTime<Utc>,
+
+        #[serde(with = "ts_milliseconds")]
+        #[serde(rename = "created")]
+        /// The date and time when the Hive Heating product was first created.
+        created_at: DateTime<Utc>,
+
+        #[serde(rename = "props")]
+        /// The properties of the Hive Heating product.
+        properties: Properties,
+
+        /// The current state of the Hive Heating product.
+        state: States,
+
+        #[serde(flatten)]
+        #[allow(missing_docs)]
+        extra: HashMap<String, Value>,
+    },
 
     /// A Hive Hot Water product.
-    HotWater(HotWater),
+    HotWater {
+        /// The unique ID of the Hive Hot Water product.
+        id: String,
+
+        #[serde(with = "ts_milliseconds")]
+        /// The date and time when the Hive Hot Water product last communicated with the Hive servers.
+        last_seen: DateTime<Utc>,
+
+        #[serde(with = "ts_milliseconds")]
+        #[serde(rename = "created")]
+        /// The date and time when the Hive Hot Water product was first created.
+        created_at: DateTime<Utc>,
+
+        #[serde(rename = "props")]
+        /// The properties of the Hive Hot Water product.
+        properties: Properties,
+
+        /// The current state of the Hive Hot Water product.
+        state: States,
+
+        #[serde(flatten)]
+        #[allow(missing_docs)]
+        extra: HashMap<String, Value>,
+    },
 
     #[serde(other)]
     /// A product which is yet to be mapped by the crate.
@@ -244,13 +231,12 @@ impl Product<'_> {
         self.client
             .set_product_state(
                 match &self.data {
-                    ProductData::Heating(data) => &data.id,
-                    ProductData::HotWater(data) => &data.id,
+                    ProductData::HotWater { id, .. } | ProductData::Heating { id, .. } => id,
                     ProductData::Unknown => "",
                 },
                 match &self.data {
-                    ProductData::Heating(_) => "heating",
-                    ProductData::HotWater(_) => "hotwater",
+                    ProductData::Heating { .. } => "heating",
+                    ProductData::HotWater { .. } => "hotwater",
                     ProductData::Unknown => "unknown",
                 },
                 states,
