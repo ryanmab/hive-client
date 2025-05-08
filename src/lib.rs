@@ -9,7 +9,7 @@
 
 //! # Hive Client
 //!
-//! The Hive Client crate provides a client for interfacing [Hive](https://www.hivehome.com/) smart home systems.
+//! The Hive Client crate provides a client for interfacing with [Hive](https://www.hivehome.com/) smart home systems.
 //!
 //! ## Usage
 //! ```toml
