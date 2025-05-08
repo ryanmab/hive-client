@@ -14,7 +14,7 @@ The Hive Client crate provides a client for interfacing with [Hive](https://www.
 ## Usage
 ```toml
 [dependencies]
-hive-client = "0.0.2"
+hive-client = "0.0.3"
 ```
 
 ## Capabilities
