@@ -10,7 +10,6 @@ updates:
       - "chore"
       - "bump-patch"
 
-
   - package-ecosystem: cargo
     directory: /
     schedule:
@@ -32,8 +31,6 @@ updates:
       - "infrastructure/tests"
     schedule:
       interval: "weekly"
-    reviewers:
-      - "ryanmab"
     labels:
       - "dependencies"
       - "terraform"
