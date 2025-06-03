@@ -42,7 +42,7 @@ jobs:
             -backend-config="bucket=hive-client-tf-state" \
             -backend-config="key=ci/${{ github.run_id }}/terraform.tfstate" \
             -backend-config="region=${{ env.region }}" \
-            -backend-config="dynamodb_table=hive-client-tf-state"
+            -backend-config="use_lockfile=true"
 
       - name: Run format
         working-directory: ./infrastructure/tests
@@ -188,7 +188,7 @@ jobs:
             -backend-config="bucket=hive-client-tf-state" \
             -backend-config="key=ci/${{ github.run_id }}/terraform.tfstate" \
             -backend-config="region=${{ env.region }}" \
-            -backend-config="dynamodb_table=hive-client-tf-state"
+            -backend-config="use_lockfile=true"
 
       - name: Run destroy
         working-directory: ./infrastructure/tests
