@@ -94,7 +94,7 @@ impl Action<'_> {
     /// # Errors
     ///
     /// Returns an error if the [Quick Actions](https://www.hivehome.com/ie/support/Help_Using_Hive/HUH_General/What-are-Quick-Actions) could not be activated.
-    pub async fn activate(&mut self) -> Result<bool, ApiError> {
+    pub async fn activate(&self) -> Result<bool, ApiError> {
         self.client.activate_action(&self.data.id).await
     }
 }
