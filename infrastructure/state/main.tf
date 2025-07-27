@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 resource "aws_s3_bucket" "terraform_state" {
-  bucket = "hive-client-tf-state"
+  bucket = "hive-client-terraform-state"
 
   lifecycle {
     prevent_destroy = true
