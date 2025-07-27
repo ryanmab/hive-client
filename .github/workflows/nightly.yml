@@ -10,6 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
+  id-token: write # For OIDC authentication with AWS
   contents: read
 
 name: Nightly
