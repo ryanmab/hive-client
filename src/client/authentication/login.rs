@@ -1,5 +1,4 @@
 use crate::authentication::user::UntrustedDevice;
-use crate::client::authentication::User;
 use crate::client::authentication::{ChallengeResponse, HiveAuth, Tokens};
 use crate::{constants, AuthenticationError};
 use aws_sdk_cognitoidentityprovider::types::{
@@ -18,38 +17,33 @@ impl HiveAuth {
     /// # Errors
     ///
     /// Returns an error if the authentication fails, or if the user is not registered with the Hive API.
-    pub async fn login(
-        &self,
-        user: &User,
-    ) -> Result<(Tokens, Option<UntrustedDevice>), AuthenticationError> {
-        let parameters = self
-            .get_user_srp_client(user)
-            .await
-            .read()
-            .await
-            .as_ref()
-            .unwrap()
-            .get_auth_parameters();
+    pub async fn login(&self) -> Result<(Tokens, Option<UntrustedDevice>), AuthenticationError> {
+        let aws_cognito_srp::UserAuthenticationParameters { a, username, .. } =
+            self.user_srp_client.get_auth_parameters();
 
         let mut builder = self
             .cognito
             .initiate_auth()
             .auth_flow(AuthFlowType::UserSrpAuth)
             .client_id(constants::CLIENT_ID)
-            .auth_parameters("SRP_A", parameters.a)
-            .auth_parameters("USERNAME", &user.username);
+            .auth_parameters("SRP_A", &a)
+            .auth_parameters("USERNAME", &username);
 
-        if let Some(device_key) = parameters.device_key {
+        if let Some(device_key) = self
+            .device_srp_client
+            .as_ref()
+            .map(|device_srp_client| device_srp_client.get_auth_parameters().device_key)
+        {
             builder = builder.auth_parameters("DEVICE_KEY", device_key);
         }
 
         let response = builder.send().await?;
 
         {
-            self.session.write().await.replace(LoginSession(
-                user.username.as_str().to_string(),
-                response.session,
-            ));
+            self.session
+                .write()
+                .await
+                .replace(LoginSession(username.clone(), response.session));
         }
 
         match response.challenge_name {
@@ -84,12 +78,9 @@ impl HiveAuth {
                 }
             }
             Some(ChallengeNameType::PasswordVerifier) => {
-                self.respond_to_challenge(
-                    user,
-                    ChallengeResponse::PasswordVerifier(
-                        response.challenge_parameters.unwrap_or_default(),
-                    ),
-                )
+                self.respond_to_challenge(ChallengeResponse::PasswordVerifier(
+                    response.challenge_parameters.unwrap_or_default(),
+                ))
                 .await
             }
             Some(name) => Err(AuthenticationError::UnsupportedChallenge(name.to_string())),

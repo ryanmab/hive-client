@@ -38,7 +38,7 @@ More in-depth examples can be found in documentation comments on the Client meth
 ```rust
 use hive_client::authentication::{TrustedDevice, User};
 
-let client = hive_client::Client::new("Home Automation").await;
+let client = hive_client::Client::new("Home Automation");
 
 let trusted_device = Some(TrustedDevice::new(
     "device_password",
@@ -46,7 +46,7 @@ let trusted_device = Some(TrustedDevice::new(
     "device_key"
 ));
 
-let attempt = client.login(User::new("example@example.com", "example", trusted_device)).await;
+let attempt = client.login(User::new("example@example.com", "example"), trusted_device).await;
 
 if let Ok(_) = attempt {
     // Login was successful
@@ -69,7 +69,7 @@ if let Ok(_) = attempt {
 use hive_client::authentication::{TrustedDevice, User};
 use hive_client::products::{Product, ProductData, State, States};
 
-let client = hive_client::Client::new("Home Automation").await;
+let client = hive_client::Client::new("Home Automation");
 
 let trusted_device = Some(TrustedDevice::new(
     "device_password",
@@ -77,7 +77,7 @@ let trusted_device = Some(TrustedDevice::new(
     "device_key"
 ));
 
-let attempt = client.login(User::new("example@example.com", "example", trusted_device)).await;
+let attempt = client.login(User::new("example@example.com", "example"), trusted_device).await;
 
 if let Ok(_) = attempt {
     // Login was successful
@@ -100,7 +100,7 @@ if let Ok(_) = attempt {
 use hive_client::authentication::{TrustedDevice, User};
 use hive_client::products::{Product, ProductData, State, States};
 
-let client = hive_client::Client::new("Home Automation").await;
+let client = hive_client::Client::new("Home Automation");
 
 let trusted_device = Some(TrustedDevice::new(
     "device_password",
@@ -108,7 +108,7 @@ let trusted_device = Some(TrustedDevice::new(
     "device_key"
 ));
 
-let attempt = client.login(User::new("example@example.com", "example", trusted_device)).await;
+let attempt = client.login(User::new("example@example.com", "example"), trusted_device).await;
 
 if let Ok(_) = attempt {
     // Login was successful

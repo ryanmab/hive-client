@@ -5,20 +5,17 @@ use hive_client::Client;
 
 #[tokio::test]
 pub async fn test_listing_operations() {
-    let mut client = Client::new("Home Automation").await;
+    let mut client = Client::new("Home Automation");
 
-    let user = User::new(
-        dotenv!("LIVE_USER_EMAIL"),
-        dotenv!("LIVE_USER_PASSWORD"),
-        Some(TrustedDevice::new(
-            dotenv!("LIVE_TRUSTED_DEVICE_PASSWORD"),
-            dotenv!("LIVE_TRUSTED_DEVICE_GROUP_KEY"),
-            dotenv!("LIVE_TRUSTED_DEVICE_KEY"),
-        )),
-    );
+    let user = User::new(dotenv!("LIVE_USER_EMAIL"), dotenv!("LIVE_USER_PASSWORD"));
+    let device = Some(TrustedDevice::new(
+        dotenv!("LIVE_TRUSTED_DEVICE_PASSWORD"),
+        dotenv!("LIVE_TRUSTED_DEVICE_GROUP_KEY"),
+        dotenv!("LIVE_TRUSTED_DEVICE_KEY"),
+    ));
 
     client
-        .login(user)
+        .login(user, device)
         .await
         .expect("Logging in with Hive should succeed");
 

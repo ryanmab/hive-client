@@ -1,4 +1,6 @@
-use crate::authentication::{ChallengeResponse, Tokens, TrustedDevice, User};
+use crate::authentication::{
+    ChallengeResponse, HiveAuth, Tokens, TrustedDevice, UntrustedDevice, User,
+};
 use crate::{ApiError, AuthenticationError, Client};
 use chrono::Utc;
 use std::sync::Arc;
@@ -24,7 +26,7 @@ impl Client {
     /// use hive_client::authentication::{TrustedDevice, User};
     ///
     /// # tokio_test::block_on(async {
-    /// let client = hive_client::Client::new("Home Automation").await;
+    /// let client = hive_client::Client::new("Home Automation");
     ///
     /// let trusted_device = Some(TrustedDevice::new(
     ///     "device_password",
@@ -32,7 +34,7 @@ impl Client {
     ///     "device_key"
     /// ));
     ///
-    /// let attempt = client.login(User::new("example@example.com", "example", trusted_device)).await;
+    /// let attempt = client.login(User::new("example@example.com", "example"), trusted_device).await;
     ///
     /// // Login shouldn't require any additional challenges, as a remembered device was provided.
     /// assert!(attempt.is_ok());
@@ -46,9 +48,9 @@ impl Client {
     /// use hive_client::AuthenticationError;
     ///
     /// # tokio_test::block_on(async {
-    /// let mut client = hive_client::Client::new("Home Automation").await;
+    /// let mut client = hive_client::Client::new("Home Automation");
     ///
-    /// let attempt = client.login(User::new("example@example.com", "example", None)).await;
+    /// let attempt = client.login(User::new("example@example.com", "example"), None).await;
     ///
     /// match attempt {
     ///     Ok(trusted_device) => {
@@ -86,28 +88,37 @@ impl Client {
     pub async fn login(
         &self,
         user: User,
-    ) -> Result<Option<Arc<TrustedDevice>>, AuthenticationError> {
-        let mut u = self.user.lock().await;
-        let user = u.insert(user);
+        trusted_device: Option<TrustedDevice>,
+    ) -> Result<Option<TrustedDevice>, AuthenticationError> {
+        let (tokens, untrusted_device) = {
+            let mut u = self.user.lock().await;
+            let user = u.insert(user);
 
-        let (tokens, untrusted_device) = self.auth.login(user).await?;
+            let mut auth = self.auth.write().await;
+            let auth = auth.insert(HiveAuth::new(user, trusted_device.as_ref()).await);
+
+            auth.login().await?
+        };
+
+        let mut lock = self.tokens.lock().await;
+        let tokens = lock.insert(Arc::new(tokens));
 
         if let Some(untrusted_device) = untrusted_device {
-            user.device.replace(Arc::new(
-                self.auth
-                    .confirm_device(
-                        &user.username,
-                        &self.friendly_name,
-                        untrusted_device,
-                        &tokens,
-                    )
+            // We've successfully logged in, and Hive (AWS Cognito) have issued a new device,
+            // lets confirm this device so that it is trusted in the future.
+            //
+            // Having a trusted device gives us two key benefits:
+            // 1. We can refresh our access token for long running sessions, without needing to
+            //    re-authenticate with username/password and 2FA.
+            // 2. For future logins (if the trusted device is provided), we can skip the 2FA step
+            //    entirely, making for a smoother experience.
+            return Ok(Some(
+                self.confirm_untrusted_device(untrusted_device, tokens)
                     .await?,
             ));
         }
 
-        self.tokens.lock().await.replace(Arc::new(tokens));
-
-        Ok(user.device.as_ref().map(Arc::clone))
+        Ok(None)
     }
 
     /// Respond to a challenge issued by Hive during the authentication process.
@@ -122,9 +133,9 @@ impl Client {
     /// use hive_client::AuthenticationError;
     ///
     /// # tokio_test::block_on(async {
-    /// let mut client = hive_client::Client::new("Home Automation").await;
+    /// let mut client = hive_client::Client::new("Home Automation");
     ///
-    /// let attempt = client.login(User::new("example@example.com", "example", None)).await;
+    /// let attempt = client.login(User::new("example@example.com", "example"), None).await;
     ///
     /// match attempt {
     ///     Ok(trusted_device) => {
@@ -162,31 +173,35 @@ impl Client {
     pub async fn respond_to_challenge(
         &mut self,
         challenge_response: ChallengeResponse,
-    ) -> Result<Option<Arc<TrustedDevice>>, AuthenticationError> {
-        let mut user = self.user.lock().await;
-        let user = user.as_mut().ok_or(AuthenticationError::NotLoggedIn)?;
+    ) -> Result<Option<TrustedDevice>, AuthenticationError> {
+        let (tokens, untrusted_device) = {
+            let auth = self.auth.read().await;
+            let auth = auth
+                .as_ref()
+                .ok_or(AuthenticationError::NoAuthenticationInProgress)?;
 
-        let (tokens, untrusted_device) = self
-            .auth
-            .respond_to_challenge(user, challenge_response)
-            .await?;
+            auth.respond_to_challenge(challenge_response).await?
+        };
+
+        let mut lock = self.tokens.lock().await;
+        let tokens = lock.insert(Arc::new(tokens));
 
         if let Some(untrusted_device) = untrusted_device {
-            user.device.replace(Arc::new(
-                self.auth
-                    .confirm_device(
-                        &user.username,
-                        &self.friendly_name,
-                        untrusted_device,
-                        &tokens,
-                    )
+            // We've successfully logged in, and Hive (AWS Cognito) have issued a new device,
+            // lets confirm this device so that it is trusted in the future.
+            //
+            // Having a trusted device gives us two key benefits:
+            // 1. We can refresh our access token for long running sessions, without needing to
+            //    re-authenticate with username/password and 2FA.
+            // 2. For future logins (if the trusted device is provided), we can skip the 2FA step
+            //    entirely, making for a smoother experience.
+            return Ok(Some(
+                self.confirm_untrusted_device(untrusted_device, tokens)
                     .await?,
             ));
         }
 
-        self.tokens.lock().await.replace(Arc::new(tokens));
-
-        Ok(user.device.as_ref().map(Arc::clone))
+        Ok(None)
     }
 
     /// Logout from Hive.
@@ -199,7 +214,7 @@ impl Client {
     /// use hive_client::authentication::{TrustedDevice, User};
     ///
     /// # tokio_test::block_on(async {
-    /// let mut client = hive_client::Client::new("Home Automation").await;
+    /// let mut client = hive_client::Client::new("Home Automation");
     ///
     /// let trusted_device = Some(TrustedDevice::new(
     ///     "device_password",
@@ -207,7 +222,7 @@ impl Client {
     ///     "device_key"
     /// ));
     ///
-    /// let attempt = client.login(User::new("example@example.com", "example", trusted_device)).await;
+    /// let attempt = client.login(User::new("example@example.com", "example"), trusted_device).await;
     ///
     /// // Login shouldn't require any additional challenges, as a remembered device was provided.
     /// assert!(attempt.is_ok());
@@ -244,27 +259,19 @@ impl Client {
             mut current_tokens
                 if current_tokens.is_some_and(|tokens| tokens.expires_at <= Utc::now()) =>
             {
+                let auth = self.auth.read().await;
+                let auth = auth.as_ref().ok_or(ApiError::AuthenticationRefreshFailed(
+                    AuthenticationError::NoAuthenticationInProgress,
+                ))?;
                 let current_tokens = current_tokens
                     .take()
                     .expect("Tokens must already be present to need to refresh");
 
-                let replacement_tokens = {
-                    let user = self.user.lock().await;
-
-                    Arc::new(
-                        self.auth
-                            .refresh_tokens(
-                                user.as_ref().and_then(|user| {
-                                    user.device
-                                        .as_ref()
-                                        .map(|device| device.device_key.as_str())
-                                }),
-                                Arc::clone(current_tokens),
-                            )
-                            .await
-                            .map_err(ApiError::AuthenticationRefreshFailed)?,
-                    )
-                };
+                let replacement_tokens = Arc::new(
+                    auth.refresh_tokens(Arc::clone(current_tokens))
+                        .await
+                        .map_err(ApiError::AuthenticationRefreshFailed)?,
+                );
 
                 token_to_refresh.replace(Arc::clone(&replacement_tokens));
 
@@ -282,5 +289,35 @@ impl Client {
                 AuthenticationError::NotLoggedIn,
             )),
         }
+    }
+
+    /// Confirm an untrusted device issued by Hive (AWS Cognito) during the authentication
+    /// process.
+    ///
+    /// This is typically called automatically during the login flow, if Hive issues a new
+    /// device for the user, when no existing trusted device is provided during login.
+    ///
+    /// Trusting a device gives two key benefits:
+    /// 1. We can refresh our access token for long running sessions, without needing to
+    ///    re-authenticate with username/password and 2FA.
+    /// 2. For future logins (if the trusted device is provided), we can skip the 2FA step
+    ///    entirely, making for a smoother experience.
+    async fn confirm_untrusted_device(
+        &self,
+        untrusted_device: UntrustedDevice,
+        tokens: &Tokens,
+    ) -> Result<TrustedDevice, AuthenticationError> {
+        let mut auth = self.auth.write().await;
+        let auth = auth
+            .as_mut()
+            .ok_or(AuthenticationError::NoAuthenticationInProgress)?;
+
+        let trusted_device = auth
+            .confirm_device(&self.friendly_name, untrusted_device, tokens)
+            .await?;
+
+        auth.replace_trusted_device(Some(&trusted_device)).await;
+
+        Ok(trusted_device)
     }
 }

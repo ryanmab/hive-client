@@ -39,7 +39,7 @@
 //! use hive_client::authentication::{TrustedDevice, User};
 //!
 //! # tokio_test::block_on(async {
-//! let client = hive_client::Client::new("Home Automation").await;
+//! let client = hive_client::Client::new("Home Automation");
 //!
 //! let trusted_device = Some(TrustedDevice::new(
 //!     "device_password",
@@ -47,7 +47,7 @@
 //!     "device_key"
 //! ));
 //!
-//! let attempt = client.login(User::new("example@example.com", "example", trusted_device)).await;
+//! let attempt = client.login(User::new("example@example.com", "example"), trusted_device).await;
 //!
 //! if let Ok(_) = attempt {
 //!     // Login was successful
@@ -73,7 +73,7 @@
 //! use hive_client::products::{Product, ProductData, State, States};
 //!
 //! # tokio_test::block_on(async {
-//! let client = hive_client::Client::new("Home Automation").await;
+//! let client = hive_client::Client::new("Home Automation");
 //!
 //! let trusted_device = Some(TrustedDevice::new(
 //!     "device_password",
@@ -81,7 +81,7 @@
 //!     "device_key"
 //! ));
 //!
-//! let attempt = client.login(User::new("example@example.com", "example", trusted_device)).await;
+//! let attempt = client.login(User::new("example@example.com", "example"), trusted_device).await;
 //!
 //! if let Ok(_) = attempt {
 //!     // Login was successful
@@ -107,7 +107,7 @@
 //! use hive_client::products::{Product, ProductData, State, States};
 //!
 //! # tokio_test::block_on(async {
-//! let client = hive_client::Client::new("Home Automation").await;
+//! let client = hive_client::Client::new("Home Automation");
 //!
 //! let trusted_device = Some(TrustedDevice::new(
 //!     "device_password",
@@ -115,7 +115,7 @@
 //!     "device_key"
 //! ));
 //!
-//! let attempt = client.login(User::new("example@example.com", "example", trusted_device)).await;
+//! let attempt = client.login(User::new("example@example.com", "example"), trusted_device).await;
 //!
 //! if let Ok(_) = attempt {
 //!     // Login was successful

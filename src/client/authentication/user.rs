@@ -1,7 +1,6 @@
 use chrono::{DateTime, Utc};
 use std::fmt::Debug;
 use std::ops::Add;
-use std::sync::Arc;
 
 #[derive(Debug)]
 /// A user registed with a Hive account.
@@ -10,7 +9,6 @@ pub struct User {
     /// to register the account.
     pub(crate) username: String,
     pub(crate) password: String,
-    pub(crate) device: Option<Arc<TrustedDevice>>,
 }
 
 impl User {
@@ -19,23 +17,12 @@ impl User {
     ///
     /// Optionally, a trusted device can be provided which will be used to authenticate the user without
     /// the need to go through additional [`crate::authentication::ChallengeRequest`]s - like SMS MFA.
-    pub fn new<'a>(
-        username: &'a str,
-        password: &'a str,
-        trusted_device: Option<TrustedDevice>,
-    ) -> Self {
+    pub fn new<'a>(username: &'a str, password: &'a str) -> Self {
         Self {
             username: username.into(),
             password: password.into(),
-            device: trusted_device.map(Arc::new),
         }
     }
-}
-
-#[derive(Debug)]
-pub enum AuthDevice {
-    Trusted(Arc<TrustedDevice>),
-    Untrusted(UntrustedDevice),
 }
 
 /// A trusted device is a device that has been confirmed.
@@ -61,20 +48,13 @@ impl TrustedDevice {
     /// Create a new trusted device which can be used to authenticate the user.
     ///
     /// ```rust
-    /// use hive_client::authentication::{TrustedDevice, User};
+    /// use hive_client::authentication::{TrustedDevice};
     ///
     /// // Create the trusted device with the device password, group key and key.
     /// let trusted_device = TrustedDevice::new(
     ///     "device_password",
     ///     "device_group_key",
     ///     "device_key"
-    /// );
-    ///
-    /// /// Assign the trusted device to the user.
-    /// let user = User::new(
-    ///     "username",
-    ///     "password",
-    ///     Some(trusted_device)
     /// );
     /// ```
     pub fn new<'a>(
@@ -91,7 +71,7 @@ impl TrustedDevice {
 }
 
 #[derive(Debug)]
-pub struct UntrustedDevice {
+pub(crate) struct UntrustedDevice {
     pub device_group_key: String,
     pub device_key: String,
 }
