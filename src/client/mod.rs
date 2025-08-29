@@ -16,12 +16,12 @@ use crate::authentication::HiveAuth;
 use crate::client::api::HiveApi;
 use crate::client::authentication::{Tokens, User};
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, RwLock};
 
 /// Client used to authenticate and interact with Hive.
 #[derive(Debug)]
 pub struct Client {
-    auth: HiveAuth,
+    auth: RwLock<Option<HiveAuth>>,
     api: HiveApi,
     user: Mutex<Option<User>>,
     tokens: Mutex<Option<Arc<Tokens>>>,
@@ -34,9 +34,10 @@ impl Client {
     /// The friendly name is used to identify the client in the
     /// [Trusted Device page](https://community.hivehome.com/s/article/2FA-2-factor-Authentication) of the Hive app if
     /// the user is authenticating for the first time (does not have a trusted device during [`Client::login`])
-    pub async fn new(friendly_name: &str) -> Self {
+    #[must_use]
+    pub fn new(friendly_name: &str) -> Self {
         Self {
-            auth: HiveAuth::new().await,
+            auth: RwLock::new(None),
             api: HiveApi::new(),
             user: Mutex::new(None),
             tokens: Mutex::new(None),
@@ -52,16 +53,12 @@ mod tests {
 
     #[tokio::test]
     async fn test_cognito_authentication_and_device_confirmation() {
-        let mut client = Client::new("Home Automation").await;
+        let mut client = Client::new("Home Automation");
 
-        let user = User::new(
-            dotenv!("MOCK_USER_EMAIL"),
-            dotenv!("MOCK_USER_PASSWORD"),
-            None,
-        );
+        let user = User::new(dotenv!("MOCK_USER_EMAIL"), dotenv!("MOCK_USER_PASSWORD"));
 
         let trusted_device = client
-            .login(user)
+            .login(user, None)
             .await
             .expect("Login should succeed")
             .expect("A trusted device should've been returned");
@@ -71,27 +68,28 @@ mod tests {
         assert!(!trusted_device.device_password.is_empty());
         assert!(trusted_device.device_key.starts_with(dotenv!("REGION")));
 
+        println!("Hello: {:?}", client.get_devices().await);
+
         client.logout().await;
     }
 
     #[tokio::test]
     async fn test_cognito_authentication_refresh() {
-        let mut client = Client::new("Home Automation").await;
+        let mut client = Client::new("Home Automation");
 
-        let user = User::new(
-            dotenv!("MOCK_USER_EMAIL"),
-            dotenv!("MOCK_USER_PASSWORD"),
-            None,
-        );
+        let user = User::new(dotenv!("MOCK_USER_EMAIL"), dotenv!("MOCK_USER_PASSWORD"));
 
-        client.login(user).await.expect("Login should succeed");
+        client
+            .login(user, None)
+            .await
+            .expect("Login should succeed");
 
         let current_tokens = {
             // Update the tokens to simulate an expiration
 
             let mut tokens = client.tokens.lock().await;
 
-            let current_tokens = tokens.clone().unwrap();
+            let current_tokens = tokens.clone().expect("Tokens should be present");
 
             let replacement_tokens = Arc::new(Tokens::new(
                 current_tokens.id_token.to_string(),

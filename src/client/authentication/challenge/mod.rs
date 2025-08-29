@@ -1,8 +1,5 @@
-use crate::authentication::user::{AuthDevice, UntrustedDevice};
-use crate::client::authentication::DeviceClient;
-use crate::client::authentication::HiveAuth;
-use crate::client::authentication::Tokens;
-use crate::client::authentication::User;
+use crate::authentication::user::UntrustedDevice;
+use crate::client::authentication::{HiveAuth, Tokens};
 use crate::AuthenticationError;
 use aws_sdk_cognitoidentityprovider::operation::respond_to_auth_challenge::RespondToAuthChallengeOutput;
 use aws_sdk_cognitoidentityprovider::types::{
@@ -10,7 +7,6 @@ use aws_sdk_cognitoidentityprovider::types::{
 };
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::sync::Arc;
 
 mod device_password_verifier;
 mod device_srp_auth;
@@ -58,30 +54,44 @@ pub enum ChallengeResponse {
 impl HiveAuth {
     pub(crate) async fn respond_to_challenge(
         &self,
-        user: &User,
         challenge_response: ChallengeResponse,
     ) -> Result<(Tokens, Option<UntrustedDevice>), AuthenticationError> {
         let response = {
             let mut session = self.session.write().await;
-            let Some(session) = session.as_mut() else {
-                unreachable!("Login session should have been started in order to have a have received challenge which needs to be responded to.")
-            };
+            let session = session
+                .as_mut()
+                .ok_or(AuthenticationError::NoAuthenticationInProgress)?;
 
             log::info!(
-                "Responding to challenge for {:?}. Challenge response is: {:?}",
-                user.username,
+                "Responding to challenge with response: {:?}",
                 &challenge_response
             );
 
             let response = match challenge_response {
                 ChallengeResponse::PasswordVerifier(parameters) => {
-                    let lock = self.get_user_srp_client(user).await;
-                    let client = &*lock.read().await;
-
                     password_verifier::respond_to_challenge(
-                        user,
                         &self.cognito,
-                        client
+                        &self.user_srp_client,
+                        self.device_srp_client.as_ref(),
+                        session,
+                        parameters,
+                    )
+                    .await?
+                }
+                ChallengeResponse::DeviceSrpAuth => {
+                    device_srp_auth::handle_challenge(
+                        &self.cognito,
+                        self.device_srp_client
+                            .as_ref()
+                            .ok_or(AuthenticationError::NoAuthenticationInProgress)?,
+                        session,
+                    )
+                    .await?
+                }
+                ChallengeResponse::DevicePasswordVerifier(parameters) => {
+                    device_password_verifier::handle_challenge(
+                        &self.cognito,
+                        self.device_srp_client
                             .as_ref()
                             .ok_or(AuthenticationError::NoAuthenticationInProgress)?,
                         session,
@@ -89,51 +99,14 @@ impl HiveAuth {
                     )
                     .await?
                 }
-                ChallengeResponse::DeviceSrpAuth => {
-                    let client = self
-                        .get_device_srp_client(
-                            &session.0,
-                            &AuthDevice::Trusted(Arc::clone(user.device.as_ref().expect(
-                                "Device details should be set to use device SRP authentication",
-                            ))),
-                        )
-                        .await;
-
-                    let Some(DeviceClient::Tracked(client)) = &*client.read().await else {
-                        unreachable!(
-                            "Device must be tracked in order to be responding to DevicePasswordVerifier challenges."
-                        )
-                    };
-
-                    device_srp_auth::handle_challenge(user, &self.cognito, client, session).await?
-                }
-                ChallengeResponse::DevicePasswordVerifier(parameters) => {
-                    let client = self
-                        .get_device_srp_client(
-                            &session.0,
-                            &AuthDevice::Trusted(Arc::clone(user.device.as_ref().expect(
-                                "Device details should be set to use device SRP authentication",
-                            ))),
-                        )
-                        .await;
-
-                    let Some(DeviceClient::Tracked(client)) = &*client.read().await else {
-                        unreachable!(
-                            "Device must be tracked in order to be responding to DevicePasswordVerifier challenges."
-                        )
-                    };
-
-                    device_password_verifier::handle_challenge(
-                        user,
+                ChallengeResponse::SmsMfa(code) => {
+                    sms_mfa::handle_challenge(
                         &self.cognito,
-                        client,
+                        self.device_srp_client.as_ref(),
                         session,
-                        parameters,
+                        &code,
                     )
                     .await?
-                }
-                ChallengeResponse::SmsMfa(code) => {
-                    sms_mfa::handle_challenge(user, &self.cognito, session, &code).await?
                 }
             };
 
@@ -144,13 +117,12 @@ impl HiveAuth {
             response
         };
 
-        self.handle_challenge_response(response, user).await
+        self.handle_challenge_response(response).await
     }
 
     async fn handle_challenge_response(
         &self,
         response: RespondToAuthChallengeOutput,
-        user: &User,
     ) -> Result<(Tokens, Option<UntrustedDevice>), AuthenticationError> {
         match &response.challenge_name {
             None => {
@@ -183,15 +155,14 @@ impl HiveAuth {
                 }
             }
             Some(ChallengeNameType::DeviceSrpAuth) => {
-                Box::pin(self.respond_to_challenge(user, ChallengeResponse::DeviceSrpAuth)).await
+                Box::pin(self.respond_to_challenge(ChallengeResponse::DeviceSrpAuth)).await
             }
             Some(ChallengeNameType::DevicePasswordVerifier) => {
-                Box::pin(self.respond_to_challenge(
-                    user,
-                    ChallengeResponse::DevicePasswordVerifier(
+                Box::pin(
+                    self.respond_to_challenge(ChallengeResponse::DevicePasswordVerifier(
                         response.challenge_parameters.unwrap_or_default(),
-                    ),
-                ))
+                    )),
+                )
                 .await
             }
             Some(ChallengeNameType::SmsMfa) => {

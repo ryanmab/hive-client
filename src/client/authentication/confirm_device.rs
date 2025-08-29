@@ -1,8 +1,8 @@
-use crate::authentication::user::{AuthDevice, UntrustedDevice};
+use crate::authentication::user::UntrustedDevice;
 use crate::client::authentication::TrustedDevice;
-use crate::client::authentication::{DeviceClient, HiveAuth, Tokens};
-use crate::AuthenticationError;
-use aws_cognito_srp::PasswordVerifierParameters;
+use crate::client::authentication::{HiveAuth, Tokens};
+use crate::{constants, AuthenticationError};
+use aws_cognito_srp::{PasswordVerifierParameters, SrpClient};
 use aws_sdk_cognitoidentityprovider::operation::confirm_device::ConfirmDeviceOutput;
 use aws_sdk_cognitoidentityprovider::types::builders::DeviceSecretVerifierConfigTypeBuilder;
 use aws_sdk_cognitoidentityprovider::types::DeviceRememberedStatusType;
@@ -10,7 +10,6 @@ use aws_sdk_cognitoidentityprovider::types::DeviceRememberedStatusType;
 impl HiveAuth {
     pub async fn confirm_device(
         &self,
-        username: &str,
         device_name: &str,
         untrusted_device: UntrustedDevice,
         tokens: &Tokens,
@@ -18,20 +17,21 @@ impl HiveAuth {
         let device_key = untrusted_device.device_key.clone();
         let device_group_key = untrusted_device.device_group_key.clone();
 
-        let lock = self
-            .get_device_srp_client(username, &AuthDevice::Untrusted(untrusted_device))
-            .await;
-
-        let srp_client = &mut *lock.write().await;
+        let srp_client = SrpClient::new(
+            aws_cognito_srp::UntrackedDevice::new(
+                constants::POOL_ID,
+                &untrusted_device.device_group_key,
+                &untrusted_device.device_key,
+            ),
+            constants::CLIENT_ID,
+            None,
+        );
 
         let PasswordVerifierParameters {
             verifier: password_verifier,
             salt,
             password,
-        } = match srp_client {
-            Some(DeviceClient::Untracked(srp_client)) => srp_client.get_password_verifier(),
-            _ => unreachable!("The device client must be untracked in order to have reached this point when confirming the device."),
-        };
+        } = srp_client.get_password_verifier();
 
         let response = self
             .cognito
@@ -67,9 +67,6 @@ impl HiveAuth {
                     AuthenticationError::DeviceConfirmationError(sdk_error.into())
                 })?;
         }
-
-        // We've confirmed the device now, so we no longer need to device client
-        srp_client.take();
 
         Ok(TrustedDevice::new(
             &password,

@@ -1,4 +1,4 @@
-use crate::authentication::{LoginSession, User};
+use crate::authentication::LoginSession;
 use crate::constants::CLIENT_ID;
 use crate::AuthenticationError;
 use aws_cognito_srp::SrpClient;
@@ -7,9 +7,9 @@ use aws_sdk_cognitoidentityprovider::types::ChallengeNameType;
 use std::collections::HashMap;
 
 pub async fn respond_to_challenge(
-    user: &User,
     cognito_client: &aws_sdk_cognitoidentityprovider::Client,
-    srp_client: &SrpClient<aws_cognito_srp::User>,
+    user_srp_client: &SrpClient<aws_cognito_srp::User>,
+    device_srp_client: Option<&SrpClient<aws_cognito_srp::TrackedDevice>>,
     session: &mut LoginSession,
     parameters: HashMap<String, String>,
 ) -> Result<RespondToAuthChallengeOutput, AuthenticationError> {
@@ -33,7 +33,7 @@ pub async fn respond_to_challenge(
     // See: https://repost.aws/questions/QU3hWYIXPnQKuTNu7tgc2Dtw/cognito-confirmdevice-invalid-device-key-given-when-logging-in-with-user-srp-auth-mfa#ANA-ld3QusSh25uaYFZY468Q
     session.0 = user_id.to_string();
 
-    let parameters = srp_client.verify(secret_block, user_id, salt, srp_b)?;
+    let parameters = user_srp_client.verify(secret_block, user_id, salt, srp_b)?;
 
     let mut builder = cognito_client
         .respond_to_auth_challenge()
@@ -51,8 +51,10 @@ pub async fn respond_to_challenge(
         )
         .challenge_responses("TIMESTAMP", &parameters.timestamp);
 
-    if let Some(trusted_device) = &user.device {
-        builder = builder.challenge_responses("DEVICE_KEY", &trusted_device.device_key);
+    if let Some(device_key) = device_srp_client
+        .map(|device_srp_client| device_srp_client.get_auth_parameters().device_key)
+    {
+        builder = builder.challenge_responses("DEVICE_KEY", device_key);
     }
 
     Ok(builder.send().await?)

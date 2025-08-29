@@ -64,7 +64,7 @@ impl Action<'_> {
     /// ```no_run
     /// use hive_client::authentication::{TrustedDevice, User};
     /// # tokio_test::block_on(async {
-    /// let client = hive_client::Client::new("Home Automation").await;
+    /// let client = hive_client::Client::new("Home Automation");
     ///
     /// let trusted_device = Some(TrustedDevice::new(
     ///     "device_password",
@@ -72,7 +72,7 @@ impl Action<'_> {
     ///     "device_key"
     /// ));
     ///
-    /// client.login(User::new("example@example.com", "example", trusted_device))
+    /// client.login(User::new("example@example.com", "example"), trusted_device)
     ///     .await
     ///     .expect("Login should succeed");
     ///
