@@ -316,7 +316,7 @@ impl Client {
             .confirm_device(&self.friendly_name, untrusted_device, tokens)
             .await?;
 
-        auth.replace_trusted_device(Some(&trusted_device)).await;
+        auth.replace_trusted_device(Some(&trusted_device));
 
         Ok(trusted_device)
     }
