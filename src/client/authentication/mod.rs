@@ -34,7 +34,7 @@ impl HiveAuth {
             .load()
             .await;
 
-        let auth = Self {
+        let mut auth = Self {
             cognito: aws_sdk_cognitoidentityprovider::Client::new(&config),
             user_srp_client: SrpClient::new(
                 aws_cognito_srp::User::new(constants::POOL_ID, &user.username, &user.password),
