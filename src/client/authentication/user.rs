@@ -71,7 +71,7 @@ impl TrustedDevice {
 }
 
 #[derive(Debug)]
-pub(crate) struct UntrustedDevice {
+pub struct UntrustedDevice {
     pub device_group_key: String,
     pub device_key: String,
 }
