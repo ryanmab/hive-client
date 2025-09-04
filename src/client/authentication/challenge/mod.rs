@@ -151,7 +151,7 @@ impl HiveAuth {
                         untrusted_device,
                     ))
                 } else {
-                    Err(AuthenticationError::AccessTokenNotValid)
+                    Err(AuthenticationError::InvalidAccessToken)
                 }
             }
             Some(ChallengeNameType::DeviceSrpAuth) => {

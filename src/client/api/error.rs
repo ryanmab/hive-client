@@ -1,4 +1,4 @@
-use crate::AuthenticationError;
+use crate::RefreshError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -16,5 +16,5 @@ pub enum ApiError {
 
     #[error("An error occurred while trying to refresh the authentication tokens")]
     /// When refreshing the authentication tokens an error occurred.
-    AuthenticationRefreshFailed(AuthenticationError),
+    RefreshError(#[from] RefreshError),
 }

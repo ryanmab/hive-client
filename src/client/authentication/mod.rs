@@ -12,7 +12,7 @@ mod refresh;
 mod user;
 
 pub use challenge::{ChallengeRequest, ChallengeResponse};
-pub use error::{AuthenticationError, DeviceConfirmationError};
+pub use error::{AuthenticationError, DeviceConfirmationError, RefreshError};
 pub use user::{TrustedDevice, User};
 
 pub(crate) use login::LoginSession;
