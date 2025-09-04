@@ -116,7 +116,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-region: ${{ env.region }}
           role-to-assume: ${{ secrets.ROLE_TO_ASSUME }}
@@ -170,7 +170,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-region: ${{ env.region }}
           role-to-assume: ${{ secrets.ROLE_TO_ASSUME }}
@@ -216,7 +216,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-region: ${{ env.region }}
           role-to-assume: ${{ secrets.ROLE_TO_ASSUME }}
@@ -265,7 +265,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-region: ${{ env.region }}
           role-to-assume: ${{ secrets.ROLE_TO_ASSUME }}
@@ -327,7 +327,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-region: ${{ env.region }}
           role-to-assume: ${{ secrets.ROLE_TO_ASSUME }}
