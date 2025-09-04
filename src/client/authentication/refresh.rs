@@ -1,11 +1,11 @@
 use crate::client::authentication::{HiveAuth, Tokens};
-use crate::{constants, AuthenticationError};
+use crate::{constants, RefreshError};
 use aws_sdk_cognitoidentityprovider::operation::initiate_auth::InitiateAuthOutput;
 use aws_sdk_cognitoidentityprovider::types::{AuthFlowType, AuthenticationResultType};
 use std::sync::Arc;
 
 impl HiveAuth {
-    pub async fn refresh_tokens(&self, tokens: Arc<Tokens>) -> Result<Tokens, AuthenticationError> {
+    pub async fn refresh_tokens(&self, tokens: Arc<Tokens>) -> Result<Tokens, RefreshError> {
         let mut builder = self
             .cognito
             .initiate_auth()
@@ -21,7 +21,10 @@ impl HiveAuth {
             builder = builder.auth_parameters("DEVICE_KEY", device_key);
         }
 
-        let response = builder.send().await?;
+        let response = builder.send().await.map_err(|err| {
+            log::error!("Failed to refresh tokens: {err}");
+            RefreshError::RequestFailed(err.to_string())
+        })?;
 
         if let InitiateAuthOutput {
             authentication_result:
@@ -45,7 +48,9 @@ impl HiveAuth {
         } else {
             log::error!("Refresh token request failed.");
 
-            Err(AuthenticationError::AccessTokenNotValid)
+            Err(RefreshError::RequestFailed(
+                "The response does not contain an ID token and access token.".to_string(),
+            ))
         }
     }
 }

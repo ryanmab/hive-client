@@ -1,7 +1,7 @@
 use crate::authentication::{
     ChallengeResponse, HiveAuth, Tokens, TrustedDevice, UntrustedDevice, User,
 };
-use crate::{ApiError, AuthenticationError, Client};
+use crate::{ApiError, AuthenticationError, Client, RefreshError};
 use chrono::Utc;
 use std::sync::Arc;
 
@@ -260,9 +260,9 @@ impl Client {
                 if current_tokens.is_some_and(|tokens| tokens.expires_at <= Utc::now()) =>
             {
                 let auth = self.auth.read().await;
-                let auth = auth.as_ref().ok_or(ApiError::AuthenticationRefreshFailed(
-                    AuthenticationError::NoAuthenticationInProgress,
-                ))?;
+                let auth = auth
+                    .as_ref()
+                    .ok_or(ApiError::RefreshError(RefreshError::NotLoggedIn))?;
                 let current_tokens = current_tokens
                     .take()
                     .expect("Tokens must already be present to need to refresh");
@@ -270,7 +270,7 @@ impl Client {
                 let replacement_tokens = Arc::new(
                     auth.refresh_tokens(Arc::clone(current_tokens))
                         .await
-                        .map_err(ApiError::AuthenticationRefreshFailed)?,
+                        .map_err(ApiError::RefreshError)?,
                 );
 
                 token_to_refresh.replace(Arc::clone(&replacement_tokens));
@@ -285,9 +285,7 @@ impl Client {
                 Ok(Arc::clone(&replacement_tokens))
             }
             Some(current_tokens) => Ok(Arc::clone(current_tokens)),
-            None => Err(ApiError::AuthenticationRefreshFailed(
-                AuthenticationError::NotLoggedIn,
-            )),
+            None => Err(ApiError::RefreshError(RefreshError::NotLoggedIn)),
         }
     }
 

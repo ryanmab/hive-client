@@ -11,6 +11,7 @@ pub use api::weather;
 
 pub use api::ApiError;
 pub use authentication::AuthenticationError;
+pub use authentication::RefreshError;
 
 use crate::authentication::HiveAuth;
 use crate::client::api::HiveApi;

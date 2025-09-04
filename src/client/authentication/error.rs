@@ -72,6 +72,24 @@ pub enum AuthenticationError {
 
 #[derive(Error, Debug)]
 #[error(transparent)]
+/// Errors that can occur while trying to refresh an existing authentication.
+pub enum RefreshError {
+    #[error("The request to refresh the authentication tokens failed as the access token could not be validated")]
+    /// The request to refresh the authentication tokens failed as the access token could
+    /// not be validated.
+    InvalidAccessToken,
+
+    #[error("The request to refresh the authentication tokens failed")]
+    /// The request to refresh the authentication tokens failed.
+    RequestFailed(String),
+
+    #[error("There is currently no valid authentication in progress")]
+    /// There is no authentication flow currently in progress, and the user is not logged in.
+    NotLoggedIn,
+}
+
+#[derive(Error, Debug)]
+#[error(transparent)]
 /// Errors that can occur while trying to confirm a device in order to
 /// make it a [`crate::authentication::TrustedDevice`].
 pub enum DeviceConfirmationError {
