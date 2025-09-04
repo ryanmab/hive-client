@@ -1,11 +1,13 @@
 use crate::authentication::user::UntrustedDevice;
 use crate::client::authentication::TrustedDevice;
 use crate::client::authentication::{HiveAuth, Tokens};
-use crate::{constants, AuthenticationError};
+use crate::constants;
 use aws_cognito_srp::{PasswordVerifierParameters, SrpClient};
 use aws_sdk_cognitoidentityprovider::operation::confirm_device::ConfirmDeviceOutput;
 use aws_sdk_cognitoidentityprovider::types::builders::DeviceSecretVerifierConfigTypeBuilder;
 use aws_sdk_cognitoidentityprovider::types::DeviceRememberedStatusType;
+
+use super::DeviceConfirmationError;
 
 impl HiveAuth {
     pub async fn confirm_device(
@@ -13,7 +15,7 @@ impl HiveAuth {
         device_name: &str,
         untrusted_device: UntrustedDevice,
         tokens: &Tokens,
-    ) -> Result<TrustedDevice, AuthenticationError> {
+    ) -> Result<TrustedDevice, DeviceConfirmationError> {
         let device_key = untrusted_device.device_key.clone();
         let device_group_key = untrusted_device.device_group_key.clone();
 
@@ -47,7 +49,7 @@ impl HiveAuth {
             )
             .send()
             .await
-            .map_err(|sdk_error| AuthenticationError::DeviceConfirmationError(sdk_error.into()))?;
+            .map_err(DeviceConfirmationError::ConfirmationFailed)?;
 
         if let ConfirmDeviceOutput {
             user_confirmation_necessary: true,
@@ -63,9 +65,7 @@ impl HiveAuth {
                 .access_token(&tokens.access_token)
                 .send()
                 .await
-                .map_err(|sdk_error| {
-                    AuthenticationError::DeviceConfirmationError(sdk_error.into())
-                })?;
+                .map_err(DeviceConfirmationError::StatusUpdateFailed)?;
         }
 
         Ok(TrustedDevice::new(
