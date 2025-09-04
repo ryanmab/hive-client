@@ -25,7 +25,7 @@ impl fmt::Display for Temperature {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(missing_docs)]
 pub struct WeatherData {
-    /// An enumeration of different whether types (i.e. "clear_sky").
+    /// An enumeration of different whether types (i.e. "`clear_sky`").
     #[serde(rename = "icon")]
     pub r#type: String,
 

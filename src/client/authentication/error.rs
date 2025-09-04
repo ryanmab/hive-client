@@ -10,7 +10,7 @@ use thiserror::Error;
 pub enum AuthenticationError {
     #[error("The session token was not found in the response")]
     /// No Access Token was issued in the response from the Hive authentication servers.
-    AccessTokenNotValid,
+    InvalidAccessToken,
 
     #[error("The presented challenge is not supported. Challenge was: {0}")]
     /// The challenge presented by the Hive authentication servers is not supported by this crate.
@@ -53,21 +53,27 @@ pub enum AuthenticationError {
         DeviceConfirmationError
     ),
 
-    #[error("The API call failed as the authentication could not be refreshed")]
-    /// The request to refresh the authentication tokens failed.
-    AuthenticationRefreshFailed,
-
     #[error("There is currently no valid authentication in progress")]
     /// There is no authentication flow currently in progress, and the user is not logged in.
     NoAuthenticationInProgress,
+}
 
-    #[error("Unable to continue with the authentication flow as the user is not logged in")]
-    /// No authentication flow has been started.
+#[derive(Error, Debug)]
+#[error(transparent)]
+/// Errors that can occur while trying to refresh an existing authentication.
+pub enum RefreshError {
+    #[error("The request to refresh the authentication tokens failed as the access token could not be validated")]
+    /// The request to refresh the authentication tokens failed as the access token could
+    /// not be validated.
+    InvalidAccessToken,
+
+    #[error("The request to refresh the authentication tokens failed")]
+    /// The request to refresh the authentication tokens failed.
+    RequestFailed(String),
+
+    #[error("There is currently no valid authentication in progress")]
+    /// There is no authentication flow currently in progress, and the user is not logged in.
     NotLoggedIn,
-
-    #[error("The device has already been confirmed")]
-    /// The device being confirmed is already trusted, meaning no confirmation is needed.
-    DeviceAlreadyTrusted,
 }
 
 #[derive(Error, Debug)]
