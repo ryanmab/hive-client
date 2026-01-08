@@ -18,7 +18,7 @@ maintenance = { status = "passively-maintained" }
 
 [dependencies]
 aws-config = "1.6.1"
-aws-sdk-cognitoidentityprovider = "1.75.0"
+aws-sdk-cognitoidentityprovider = "1.76.0"
 tokio = { version = "1.44.2", features = ["test-util", "macros"] }
 chrono = { version = "0.4.40", features = ["serde"] }
 thiserror = "2.0.12"
