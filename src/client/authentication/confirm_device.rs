@@ -4,8 +4,8 @@ use crate::client::authentication::{HiveAuth, Tokens};
 use crate::constants;
 use aws_cognito_srp::{PasswordVerifierParameters, SrpClient};
 use aws_sdk_cognitoidentityprovider::operation::confirm_device::ConfirmDeviceOutput;
-use aws_sdk_cognitoidentityprovider::types::builders::DeviceSecretVerifierConfigTypeBuilder;
 use aws_sdk_cognitoidentityprovider::types::DeviceRememberedStatusType;
+use aws_sdk_cognitoidentityprovider::types::builders::DeviceSecretVerifierConfigTypeBuilder;
 
 use super::DeviceConfirmationError;
 

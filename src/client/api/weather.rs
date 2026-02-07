@@ -1,6 +1,6 @@
 use crate::client::api::{ApiError, HiveApi};
 use crate::client::authentication::Tokens;
-use crate::helper::url::{get_base_url, Url};
+use crate::helper::url::{Url, get_base_url};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::fmt::Debug;

@@ -1,5 +1,5 @@
 use crate::client::authentication::{HiveAuth, Tokens};
-use crate::{constants, RefreshError};
+use crate::{RefreshError, constants};
 use aws_sdk_cognitoidentityprovider::operation::initiate_auth::InitiateAuthOutput;
 use aws_sdk_cognitoidentityprovider::types::{AuthFlowType, AuthenticationResultType};
 use std::sync::Arc;

@@ -1,6 +1,6 @@
 use crate::authentication::user::UntrustedDevice;
 use crate::client::authentication::{ChallengeResponse, HiveAuth, Tokens};
-use crate::{constants, AuthenticationError};
+use crate::{AuthenticationError, constants};
 use aws_sdk_cognitoidentityprovider::types::{
     AuthFlowType, AuthenticationResultType, ChallengeNameType, NewDeviceMetadataType,
 };

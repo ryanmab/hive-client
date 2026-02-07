@@ -1,13 +1,13 @@
+use crate::Client;
 use crate::client::api::ApiError;
 use crate::client::api::HiveApi;
 use crate::client::authentication::Tokens;
-use crate::helper::url::{get_base_url, Url};
-use crate::Client;
-use chrono::{serde::ts_milliseconds, serde::ts_milliseconds_option, DateTime, Utc};
+use crate::helper::url::{Url, get_base_url};
+use chrono::{DateTime, Utc, serde::ts_milliseconds, serde::ts_milliseconds_option};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use serde_with::{serde_as, EnumMap};
+use serde_with::{EnumMap, serde_as};
 use std::collections::HashMap;
 use std::fmt;
 use std::fmt::{Debug, Display, Formatter};
