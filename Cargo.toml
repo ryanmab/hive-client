@@ -1,6 +1,6 @@
 [package]
 name = "hive-client"
-version = "0.0.5"
+version = "0.0.6"
 authors = ["Ryan Maber <ryan@ryanmaber.com>"]
 license = "MIT"
 description = "A Rust client for interfacing with Hive smart home systems."
