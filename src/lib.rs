@@ -14,7 +14,7 @@
 //! ## Usage
 //! ```toml
 //! [dependencies]
-//! hive-client = "0.0.5"
+//! hive-client = "0.0.6"
 //! ```
 //!
 //! ## Capabilities
