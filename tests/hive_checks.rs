@@ -1,7 +1,7 @@
 use dotenvy_macro::dotenv;
+use hive_client::Client;
 use hive_client::authentication::{TrustedDevice, User};
 use hive_client::products::Product;
-use hive_client::Client;
 
 #[tokio::test]
 pub async fn test_listing_operations() {

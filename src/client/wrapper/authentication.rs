@@ -1,6 +1,6 @@
 use crate::{
-    authentication::{ChallengeResponse, HiveAuth, Tokens, TrustedDevice, UntrustedDevice, User},
     ApiError, AuthenticationError, Client, RefreshError,
+    authentication::{ChallengeResponse, HiveAuth, Tokens, TrustedDevice, UntrustedDevice, User},
 };
 use chrono::Utc;
 use std::sync::Arc;

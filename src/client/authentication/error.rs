@@ -62,7 +62,9 @@ pub enum AuthenticationError {
 #[error(transparent)]
 /// Errors that can occur while trying to refresh an existing authentication.
 pub enum RefreshError {
-    #[error("The request to refresh the authentication tokens failed as the access token could not be validated")]
+    #[error(
+        "The request to refresh the authentication tokens failed as the access token could not be validated"
+    )]
     /// The request to refresh the authentication tokens failed as the access token could
     /// not be validated.
     InvalidAccessToken,

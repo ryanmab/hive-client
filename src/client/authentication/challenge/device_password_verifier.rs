@@ -1,6 +1,6 @@
+use crate::AuthenticationError;
 use crate::authentication::LoginSession;
 use crate::constants::CLIENT_ID;
-use crate::AuthenticationError;
 use aws_cognito_srp::{SrpClient, VerificationParameters};
 use aws_sdk_cognitoidentityprovider::operation::respond_to_auth_challenge::RespondToAuthChallengeOutput;
 use aws_sdk_cognitoidentityprovider::types::ChallengeNameType;

@@ -1,9 +1,9 @@
-use crate::client::api::error::ApiError;
-use crate::client::api::HiveApi;
-use crate::client::authentication::Tokens;
-use crate::helper::url::{get_base_url, Url};
 use crate::Client;
-use chrono::{serde::ts_milliseconds, DateTime, Utc};
+use crate::client::api::HiveApi;
+use crate::client::api::error::ApiError;
+use crate::client::authentication::Tokens;
+use crate::helper::url::{Url, get_base_url};
+use chrono::{DateTime, Utc, serde::ts_milliseconds};
 use reqwest::StatusCode;
 use serde::Deserialize;
 use serde_json::Value;
