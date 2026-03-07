@@ -55,9 +55,9 @@ checksum = "ace50bade8e6234aa140d9a2f552bbee1db4d353f69b8217bc503490fc1a9f26"
 
 [[package]]
 name = "aws-cognito-srp"
-version = "0.2.0"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "21346bb722cef1e1931382f9ff5c95e08b2584b04c0fa01fd1a33c355bb20210"
+checksum = "928ed700f7538b4b48f8ea88e27b9ed0769aa67d242f2259cc16d9ec3375d2b9"
 dependencies = [
  "base64 0.22.1",
  "chrono",
