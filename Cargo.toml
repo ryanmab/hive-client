@@ -7,7 +7,7 @@ description = "A Rust client for interfacing with Hive smart home systems."
 keywords = ["hive", "smart-home", "home-automation", "client", "hive-home"]
 categories = ["api-bindings"]
 edition = "2024"
-rust-version = "1.85.0"
+rust-version = "1.88.0"
 readme = "README.md"
 
 homepage = "https://ryanmaber.com"
