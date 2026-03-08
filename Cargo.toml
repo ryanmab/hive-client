@@ -7,7 +7,7 @@ description = "A Rust client for interfacing with Hive smart home systems."
 keywords = ["hive", "smart-home", "home-automation", "client", "hive-home"]
 categories = ["api-bindings"]
 edition = "2024"
-rust-version = "1.85.0"
+rust-version = "1.88.0"
 readme = "README.md"
 
 homepage = "https://ryanmaber.com"
@@ -24,7 +24,7 @@ chrono = { version = "0.4.40", features = ["serde"] }
 thiserror = "2.0.12"
 reqwest = { version = "0.12.15", features = ["json"] }
 log = { version = "0.4.27", features = ["kv"] }
-serde = { version = "1.0.217", features = ["serde_derive"] }
+serde = { version = "1.0.228", features = ["serde_derive"] }
 serde_json = "1.0.149"
 serde_with = "3.17.0"
 aws-cognito-srp = "0.2"
