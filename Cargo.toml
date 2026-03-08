@@ -25,7 +25,7 @@ thiserror = "2.0.12"
 reqwest = { version = "0.12.15", features = ["json"] }
 log = { version = "0.4.27", features = ["kv"] }
 serde = { version = "1.0.217", features = ["serde_derive"] }
-serde_json = "1.0.140"
+serde_json = "1.0.149"
 serde_with = "3.17.0"
 aws-cognito-srp = "0.2"
 
