@@ -25,5 +25,5 @@ pub async fn handle_challenge(
         builder = builder.challenge_responses("DEVICE_KEY", device_key);
     }
 
-    Ok(builder.send().await?)
+    Ok(builder.send().await.map_err(Box::new)?)
 }

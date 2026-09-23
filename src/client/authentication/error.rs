@@ -20,14 +20,14 @@ pub enum AuthenticationError {
     /// The request to begin the authentication flow failed.
     LoginFailed(
         #[from]
-        SdkError<aws_sdk_cognitoidentityprovider::operation::initiate_auth::InitiateAuthError>,
+        Box<SdkError<aws_sdk_cognitoidentityprovider::operation::initiate_auth::InitiateAuthError>>
     ),
 
     #[error(transparent)]
     /// The request to respond to a challenge during the authentication flow failed.
     ChallengeFailed(
         #[from]
-        SdkError<aws_sdk_cognitoidentityprovider::operation::respond_to_auth_challenge::RespondToAuthChallengeError>,
+        Box<SdkError<aws_sdk_cognitoidentityprovider::operation::respond_to_auth_challenge::RespondToAuthChallengeError>>
     ),
 
     #[error("The challenge was not handled correctly")]
@@ -35,7 +35,7 @@ pub enum AuthenticationError {
     MissingChallengeParameter(String),
 
     #[error("An error occurred while trying to authenticate the user")]
-    /// An error occured while trying to complete the [Secure Remote Password (SRP)](https://github.com/ryanmab/aws-cognito-srp) authentication challenges.
+    /// An error occurred while trying to complete the [Secure Remote Password (SRP)](https://github.com/ryanmab/aws-cognito-srp) authentication challenges.
     SrpFailed(
         #[from]
         SrpError,
@@ -87,14 +87,14 @@ pub enum DeviceConfirmationError {
     /// The request to confirm the device failed.
     ConfirmationFailed(
         #[from]
-        SdkError<aws_sdk_cognitoidentityprovider::operation::confirm_device::ConfirmDeviceError>,
+        Box<SdkError<aws_sdk_cognitoidentityprovider::operation::confirm_device::ConfirmDeviceError>>,
     ),
 
     #[error(transparent)]
     /// The request to update the device status failed.
     StatusUpdateFailed(
         #[from]
-        SdkError<aws_sdk_cognitoidentityprovider::operation::update_device_status::UpdateDeviceStatusError>,
+        Box<SdkError<aws_sdk_cognitoidentityprovider::operation::update_device_status::UpdateDeviceStatusError>>
     ),
 
     #[error("The device being confirmed is already tracked")]

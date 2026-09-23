@@ -37,7 +37,7 @@ impl HiveAuth {
             builder = builder.auth_parameters("DEVICE_KEY", device_key);
         }
 
-        let response = builder.send().await?;
+        let response = builder.send().await.map_err(Box::new)?;
 
         {
             self.session
@@ -57,17 +57,16 @@ impl HiveAuth {
                     ..
                 }) = response.authentication_result
                 {
-                    let mut untrusted_device: Option<UntrustedDevice> = None;
-
-                    if let Some(NewDeviceMetadataType {
+                    let untrusted_device = if let Some(NewDeviceMetadataType {
                         device_key: Some(device_key),
                         device_group_key: Some(device_group_key),
                         ..
                     }) = new_device_metadata
                     {
-                        untrusted_device =
-                            Some(UntrustedDevice::new(&device_group_key, &device_key));
-                    }
+                        Some(UntrustedDevice::new(&device_group_key, &device_key))
+                    } else {
+                        None
+                    };
 
                     Ok((
                         Tokens::new(id_token, access_token, refresh_token, expires_in),
