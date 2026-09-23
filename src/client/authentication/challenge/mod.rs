@@ -62,10 +62,7 @@ impl HiveAuth {
                 .as_mut()
                 .ok_or(AuthenticationError::NoAuthenticationInProgress)?;
 
-            log::info!(
-                "Responding to challenge with response: {:?}",
-                &challenge_response
-            );
+            log::info!("Responding to challenge with response: {challenge_response:?}");
 
             let response = match challenge_response {
                 ChallengeResponse::PasswordVerifier(parameters) => {
@@ -135,16 +132,17 @@ impl HiveAuth {
                     ..
                 }) = response.authentication_result
                 {
-                    let mut untrusted_device: Option<UntrustedDevice> = None;
-                    if let Some(NewDeviceMetadataType {
-                        device_key: Some(device_key),
-                        device_group_key: Some(device_group_key),
-                        ..
-                    }) = new_device_metadata
-                    {
-                        untrusted_device =
-                            Some(UntrustedDevice::new(&device_group_key, &device_key));
-                    }
+                    let untrusted_device: Option<UntrustedDevice> =
+                        if let Some(NewDeviceMetadataType {
+                            device_key: Some(device_key),
+                            device_group_key: Some(device_group_key),
+                            ..
+                        }) = new_device_metadata
+                        {
+                            Some(UntrustedDevice::new(&device_group_key, &device_key))
+                        } else {
+                            None
+                        };
 
                     Ok((
                         Tokens::new(id_token, access_token, refresh_token, expires_in),

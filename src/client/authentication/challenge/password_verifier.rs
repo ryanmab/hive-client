@@ -31,7 +31,7 @@ pub async fn respond_to_challenge(
     // with an "Invalid device key" error if the user id is not used.
     //
     // See: https://repost.aws/questions/QU3hWYIXPnQKuTNu7tgc2Dtw/cognito-confirmdevice-invalid-device-key-given-when-logging-in-with-user-srp-auth-mfa#ANA-ld3QusSh25uaYFZY468Q
-    session.0 = user_id.to_string();
+    session.0.clone_from(user_id);
 
     let parameters = user_srp_client.verify(secret_block, user_id, salt, srp_b)?;
 
@@ -57,5 +57,5 @@ pub async fn respond_to_challenge(
         builder = builder.challenge_responses("DEVICE_KEY", device_key);
     }
 
-    Ok(builder.send().await?)
+    Ok(builder.send().await.map_err(Box::new)?)
 }

@@ -49,7 +49,7 @@ impl HiveAuth {
             )
             .send()
             .await
-            .map_err(DeviceConfirmationError::ConfirmationFailed)?;
+            .map_err(|e| DeviceConfirmationError::ConfirmationFailed(Box::new(e)))?;
 
         if let ConfirmDeviceOutput {
             user_confirmation_necessary: true,
@@ -65,7 +65,7 @@ impl HiveAuth {
                 .access_token(&tokens.access_token)
                 .send()
                 .await
-                .map_err(DeviceConfirmationError::StatusUpdateFailed)?;
+                .map_err(|e| DeviceConfirmationError::StatusUpdateFailed(Box::new(e)))?;
         }
 
         Ok(TrustedDevice::new(

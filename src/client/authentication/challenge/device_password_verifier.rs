@@ -41,5 +41,6 @@ pub async fn handle_challenge(
         .challenge_responses("TIMESTAMP", timestamp)
         .challenge_responses("DEVICE_KEY", device_key)
         .send()
-        .await?)
+        .await
+        .map_err(Box::new)?)
 }
